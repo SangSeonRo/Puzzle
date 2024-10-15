@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
 
@@ -14,13 +15,18 @@ class PUZZLE_API ATile : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ATile();
+	void SetTile(int8 typeIndex, int8 rowIndex, int8 columnIndex, UMaterialInterface* material);
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* StaticMesh;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* BoxComponent;
 
+	UPROPERTY(VisibleAnywhere)
+	int8 TypeIndex = -1;
+	UPROPERTY(VisibleAnywhere)
+	int8 RowIndex = -1;
+	UPROPERTY(VisibleAnywhere)
+	int8 ColumnIndex = -1;
 };

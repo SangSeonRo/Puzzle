@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tile.h"
 #include "GameFramework/Actor.h"
 #include "TileGrid.generated.h"
 
@@ -22,5 +23,23 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY(EditAnywhere, Category = "Grid Setting")
+	int8 GridRow = 6;
+	UPROPERTY(EditAnywhere, Category = "Grid Setting")
+	int8 GridColumn = 6;
+	UPROPERTY(EditAnywhere, Category = "Grid Setting")
+	TSubclassOf<ATile> TileClass;
+	UPROPERTY(EditAnywhere, Category = "Grid Setting")
+	TArray<UMaterialInterface*> Materials;
+
+	
+	UPROPERTY(VisibleAnywhere, Category = "Grid")
+	TArray<ATile*> Tiles;
+
+	TArray<TArray<ATile*>> Grid;
+
+	void MakeGrid();
+	
 
 };

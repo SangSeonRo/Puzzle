@@ -7,21 +7,27 @@
 ATile::ATile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
+	SetRootComponent(BoxComponent);
+	BoxComponent->SetBoxExtent(FVector(50.0f));
+
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+	StaticMesh->SetupAttachment(BoxComponent);
+	StaticMesh->SetRelativeScale3D(FVector(0.95f));
+
+	ConstructorHelpers::FObjectFinder<UStaticMesh> InitMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	if (InitMesh.Succeeded())
+	{
+		StaticMesh->SetStaticMesh(InitMesh.Object);
+	}	
 }
 
-// Called when the game starts or when spawned
-void ATile::BeginPlay()
+void ATile::SetTile(int8 typeIndex, int8 rowIndex, int8 columnIndex, UMaterialInterface* material)
 {
-	Super::BeginPlay();
-	
+	TypeIndex = typeIndex;
+	RowIndex = rowIndex;
+	ColumnIndex = columnIndex;
+	StaticMesh->SetMaterial(0, material);
 }
-
-// Called every frame
-void ATile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
