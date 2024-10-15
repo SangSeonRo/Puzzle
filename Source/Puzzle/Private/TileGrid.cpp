@@ -195,13 +195,22 @@ void ATileGrid::MoveTiles()
 	{
 		for(int j = 0; j < Grid[i].Num(); j++)
 		{
-			if(Grid[i-1][j] == nullptr)
+			int targetRowIndex = i-1;
+			while(targetRowIndex >= 0)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Grid[%d][%d]==nullptr"), i-1, j);
-				Grid[i-1][j] = Grid[i][j];
-				Grid[i-1][j]->RowIndex = (i-1);
-				Grid[i-1][j]->ColumnIndex = j;
-				Grid[i-1][j]->SetActorLocation(FVector(0, j*100, (i-1)*100));				
+				if(Grid[targetRowIndex][j] != nullptr)
+					break;
+				
+					targetRowIndex--;
+			}
+			
+			if(Grid[i][j] != nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Grid[%d][%d]==nullptr"), targetRowIndex, j);
+				Grid[targetRowIndex][j] = Grid[i][j];
+				Grid[targetRowIndex][j]->RowIndex = targetRowIndex;
+				Grid[targetRowIndex][j]->ColumnIndex = j;
+				Grid[targetRowIndex][j]->SetActorLocation(FVector(0, j*100, targetRowIndex*100));				
 				Grid[i][j] = nullptr;	
 			}
 		}
