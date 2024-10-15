@@ -72,15 +72,23 @@ void ATileGrid::SearchMachingTiles()
 
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 {
-	FVector loc1 = tile1->GetActorLocation();
-	tile1->SetActorLocation(tile2->GetActorLocation());
-	tile2->SetActorLocation(loc1);
+	if((tile1->RowIndex == tile2->RowIndex && FMath::Abs(tile1->ColumnIndex - tile2->ColumnIndex) == 1)
+	||(tile1->ColumnIndex == tile2->ColumnIndex && FMath::Abs(tile1->RowIndex - tile2->RowIndex) == 1))
+	{
+		FVector loc1 = tile1->GetActorLocation();
+		tile1->SetActorLocation(tile2->GetActorLocation());
+		tile2->SetActorLocation(loc1);
 	
-	int8 tempRowIndex = tile1->RowIndex;
-	tile1->RowIndex = tile2->RowIndex;
-	tile2->RowIndex = tempRowIndex;
+		int8 tempRowIndex = tile1->RowIndex;
+		tile1->RowIndex = tile2->RowIndex;
+		tile2->RowIndex = tempRowIndex;
 
-	int8 tempColumnIndex = tile1->ColumnIndex;
-	tile1->ColumnIndex = tile2->ColumnIndex;
-	tile2->ColumnIndex = tempColumnIndex;;
+		int8 tempColumnIndex = tile1->ColumnIndex;
+		tile1->ColumnIndex = tile2->ColumnIndex;
+		tile2->ColumnIndex = tempColumnIndex;;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
+	}	
 }

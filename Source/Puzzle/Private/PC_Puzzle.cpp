@@ -5,6 +5,7 @@
 
 #include "GI_Puzzle.h"
 #include "Tile.h"
+#include "TileGrid.h"
 
 void APC_Puzzle::SetupInputComponent()
 {
