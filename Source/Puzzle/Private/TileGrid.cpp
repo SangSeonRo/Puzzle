@@ -65,3 +65,22 @@ void ATileGrid::MakeGrid()
 	}		
 }
 
+void ATileGrid::SearchMachingTiles()
+{
+	
+}
+
+void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
+{
+	FVector loc1 = tile1->GetActorLocation();
+	tile1->SetActorLocation(tile2->GetActorLocation());
+	tile2->SetActorLocation(loc1);
+	
+	int8 tempRowIndex = tile1->RowIndex;
+	tile1->RowIndex = tile2->RowIndex;
+	tile2->RowIndex = tempRowIndex;
+
+	int8 tempColumnIndex = tile1->ColumnIndex;
+	tile1->ColumnIndex = tile2->ColumnIndex;
+	tile2->ColumnIndex = tempColumnIndex;;
+}

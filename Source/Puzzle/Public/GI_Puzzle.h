@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tile.h"
 #include "Engine/GameInstance.h"
 #include "GI_Puzzle.generated.h"
 
@@ -13,5 +14,10 @@ UCLASS()
 class PUZZLE_API UGI_Puzzle : public UGameInstance
 {
 	GENERATED_BODY()
-	
+
+public:
+	ATile* PreSelectedTile;
+	ATile* SelectedTile;
+
+	void SetSelectedTile(ATile* Tile);
 };

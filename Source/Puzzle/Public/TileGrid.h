@@ -40,6 +40,6 @@ public:
 	TArray<TArray<ATile*>> Grid;
 
 	void MakeGrid();
-	
-
+	void SearchMachingTiles();
+	void SwapTile(ATile* tile1, ATile* tile2);
 };
