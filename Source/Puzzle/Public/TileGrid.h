@@ -41,4 +41,6 @@ public:
 	void SearchMachingTile(ATile* tile);
 	void SwapTile(ATile* tile1, ATile* tile2);
 	void MoveTiles();
+
+	bool bTileMoved = false;
 };

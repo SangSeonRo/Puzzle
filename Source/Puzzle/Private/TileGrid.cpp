@@ -180,7 +180,10 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		SearchMachingTile(tile1);
 		SearchMachingTile(tile2);
 
-		MoveTiles();
+		do {
+			MoveTiles();
+		} while (bTileMoved);	
+		
 	}
 	else
 	{
@@ -191,27 +194,23 @@ void ATileGrid::MoveTiles()
 {
 	UE_LOG(LogTemp, Warning, TEXT("MoveTiles"));
 
+	bTileMoved = false;
+	
 	for(int i = 1; i < Grid.Num(); i++)
 	{
+		int targetRowIndex = i-1;
 		for(int j = 0; j < Grid[i].Num(); j++)
-		{
-			int targetRowIndex = i-1;
-			while(targetRowIndex >= 0)
-			{
-				if(Grid[targetRowIndex][j] != nullptr)
-					break;
-				
-					targetRowIndex--;
-			}
-			
-			if(Grid[i][j] != nullptr)
+		{				
+			if(Grid[i][j] != nullptr && Grid[targetRowIndex][j] == nullptr)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Grid[%d][%d]==nullptr"), targetRowIndex, j);
 				Grid[targetRowIndex][j] = Grid[i][j];
 				Grid[targetRowIndex][j]->RowIndex = targetRowIndex;
 				Grid[targetRowIndex][j]->ColumnIndex = j;
 				Grid[targetRowIndex][j]->SetActorLocation(FVector(0, j*100, targetRowIndex*100));				
-				Grid[i][j] = nullptr;	
+				Grid[i][j] = nullptr;
+
+				bTileMoved = true;
 			}
 		}
 	}
