@@ -15,7 +15,7 @@ class PUZZLE_API ATile : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ATile();
-	void SetTile(int8 typeIndex, int8 rowIndex, int8 columnIndex, UMaterialInterface* material);
+	void SetTile(int8 typeIndex, UMaterialInterface* material);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMesh;
@@ -25,8 +25,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	int8 TypeIndex = -1;
-	UPROPERTY(VisibleAnywhere)
-	int8 RowIndex = -1;
-	UPROPERTY(VisibleAnywhere)
-	int8 ColumnIndex = -1;
+
+	bool IsMatching(ATile* otherTile);
 };

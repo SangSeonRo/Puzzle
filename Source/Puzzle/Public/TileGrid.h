@@ -30,17 +30,17 @@ public:
 	TSubclassOf<ATile> TileClass;
 	UPROPERTY(EditAnywhere, Category = "Grid Setting")
 	TArray<UMaterialInterface*> Materials;
-
 	
 	UPROPERTY(VisibleAnywhere, Category = "Grid")
 	TArray<ATile*> Tiles;
-
-	TArray<TArray<ATile*>> Grid;
 
 	void MakeGrid();
 	void SearchMachingTile(ATile* tile);
 	void SwapTile(ATile* tile1, ATile* tile2);
 	void MoveTiles();
+	int GetTileIndexFromGridIndex(int8 row, int8 column);
+	int8 GetGridRowIndexFromTileIndex(int tileIndex);
+	int8 GetGridColumnFromTileIndex(int tileIndex);
 
 	bool bTileMoved = false;
 };

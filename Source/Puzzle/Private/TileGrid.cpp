@@ -3,6 +3,10 @@
 
 #include "TileGrid.h"
 
+#include "Chaos/PBDRigidsEvolution.h"
+#include "Debug/ReporterGraph.h"
+#include "SceneQueries/SceneSnappingManager.h"
+
 // Sets default values
 ATileGrid::ATileGrid()
 {
@@ -28,19 +32,7 @@ void ATileGrid::MakeGrid()
 		
 		Tiles.Empty();	
 	}
-
-	if(Grid.Num()>0)
-	{
-		for(int i = 0; i < Grid.Num(); i++)
-		{
-			Grid[i].Empty();
-		}
-		Grid.Empty();
-	}
-
-	Grid.SetNum(GridRow);
-	for(int i = 0; i < GridRow; i++)
-		Grid[i].SetNum(GridColumn);
+	Tiles.SetNum(GridRow * GridColumn);
 	
 	for(int i = 0; i < GridRow; i++)
 	{
@@ -50,9 +42,8 @@ void ATileGrid::MakeGrid()
 			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, j*100, i*100), FRotator::ZeroRotator);
 			if(tile)
 			{
-				tile->SetTile(typeIndex, i, j, Materials[typeIndex]);
-				Tiles.Add(tile);
-				Grid[i][j] = tile;
+				tile->SetTile(typeIndex, Materials[typeIndex]);
+				Tiles[i*GridColumn + j] = tile;
 			}
 		}
 	}		
@@ -62,121 +53,133 @@ void ATileGrid::SearchMachingTile(ATile* tile)
 {
 	//Grid[tile->RowIndex][tile->ColumnIndex]
 	UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
-
-	TArray<ATile*> matRowTiles;
-	matRowTiles.Empty();
-	matRowTiles.Add(tile);
-	int8 i = tile->RowIndex;
-	while(true)
-	{
-		--i;
-		if(i<0)
-			break;
-
-		if(Grid[i][tile->ColumnIndex] == nullptr)
-			break;
-		if(tile->TypeIndex == Grid[i][tile->ColumnIndex]->TypeIndex)
-			matRowTiles.Add(Grid[i][tile->ColumnIndex]);
-		else
-			break;
-	}
 	
-	i = tile->RowIndex;
-	while(true)
-	{
-		++i;
-		if(i > Grid.Num()-1)
-			break;
-
-		if(Grid[i][tile->ColumnIndex] == nullptr)
-			break;
-		if(tile->TypeIndex == Grid[i][tile->ColumnIndex]->TypeIndex)
-			matRowTiles.Add(Grid[i][tile->ColumnIndex]);
-		else
-			break;
-	}
 	
-	TArray<ATile*> matColumnTiles;
-	matColumnTiles.Empty();
-	matColumnTiles.Add(tile);
-	i = tile->ColumnIndex;
+
+	int tileIndex = Tiles.Find(tile);
+	int8 gridRowIndex = GetGridRowIndexFromTileIndex(tileIndex);
+	int8 gridColumnIndex = GetGridColumnFromTileIndex(tileIndex);
+
+	TArray<ATile*> HorizontalMatchTiles;
+	HorizontalMatchTiles.Empty();
+	HorizontalMatchTiles.Add(tile);
+
+	int tempColumnIndex = gridColumnIndex;
 	while(true)
 	{
-		--i;
-		if(i<0)
+		--tempColumnIndex;
+		if(tempColumnIndex<0)
 			break;
 
-		if(Grid[tile->RowIndex][i] == nullptr)
-			break;
-			
-		if(tile->TypeIndex == Grid[tile->RowIndex][i]->TypeIndex)
-			matColumnTiles.Add(Grid[tile->RowIndex][i]);
-		else
-			break;
-	}
-	
-	i = tile->ColumnIndex;
-	while(true)
-	{
-		++i;
-		if(i > Grid[tile->RowIndex].Num()-1)
-			break;
+		int targetIndex = GetTileIndexFromGridIndex(gridRowIndex,tempColumnIndex);
 
-		if(Grid[tile->RowIndex][i] == nullptr)
+		if(Tiles[targetIndex] == nullptr)
 			break;
 		
-		if(tile->TypeIndex == Grid[tile->RowIndex][i]->TypeIndex)
-			matColumnTiles.Add(Grid[tile->RowIndex][i]);
+		if(tile->IsMatching(Tiles[targetIndex]))
+			HorizontalMatchTiles.Add(Tiles[targetIndex]);
 		else
 			break;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("maching Row tile : %d"), matRowTiles.Num());
-	UE_LOG(LogTemp, Warning, TEXT("maching Column tile : %d"), matColumnTiles.Num());
-	
-	if(matRowTiles.Num() >= 3)
+	tempColumnIndex = gridColumnIndex;
+	while(true)
 	{
-		for(int j = 0; j < matRowTiles.Num(); j++)
+		++tempColumnIndex;
+		if(tempColumnIndex >= GridColumn)
+			break;
+
+		int targetIndex = GetTileIndexFromGridIndex(gridRowIndex,tempColumnIndex);
+
+		if(Tiles[targetIndex] == nullptr)
+			break;
+		
+		if(tile->IsMatching(Tiles[targetIndex]))
+			HorizontalMatchTiles.Add(Tiles[targetIndex]);
+		else
+			break;
+	}
+	
+	TArray<ATile*> VerticalMatchTiles;
+	VerticalMatchTiles.Empty();
+	VerticalMatchTiles.Add(tile);
+
+	int tempRowIndex = gridRowIndex;
+	while(true)
+	{
+		--tempRowIndex;
+		if(tempRowIndex<0)
+			break;
+
+		int targetIndex = GetTileIndexFromGridIndex(tempRowIndex,gridColumnIndex);
+
+		if(Tiles[targetIndex] == nullptr)
+			break;
+		
+		if(tile->IsMatching(Tiles[targetIndex]))
+			VerticalMatchTiles.Add(Tiles[targetIndex]);
+		else
+			break;
+	}
+
+	tempRowIndex = gridRowIndex;
+	while(true)
+	{
+		++tempRowIndex;
+		if(tempRowIndex >= GridRow)
+			break;
+		
+		int targetIndex = GetTileIndexFromGridIndex(tempRowIndex,gridColumnIndex);
+
+		if(Tiles[targetIndex] == nullptr)
+			break;
+		
+		if(tile->IsMatching(Tiles[targetIndex]))
+			VerticalMatchTiles.Add(Tiles[targetIndex]);
+		else
+			break;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("maching_Horizontal : %d"), HorizontalMatchTiles.Num());
+	UE_LOG(LogTemp, Warning, TEXT("maching_Vertical : %d"), VerticalMatchTiles.Num());
+	
+	if(HorizontalMatchTiles.Num() >= 3)
+	{
+		for(int j = 0; j < HorizontalMatchTiles.Num(); j++)
 		{
-			Tiles.Remove(matRowTiles[j]);
-			Grid[matRowTiles[j]->RowIndex][matRowTiles[j]->ColumnIndex] = nullptr;
-			matRowTiles[j]->Destroy();
+			int targetTileIndex = Tiles.Find(HorizontalMatchTiles[j]);
+			Tiles[targetTileIndex] = nullptr;
+			HorizontalMatchTiles[j]->Destroy();
 		}		
 	}
-	matRowTiles.Empty();
-
-	if(matColumnTiles.Num()>=3)
+	HorizontalMatchTiles.Empty();
+	
+	if(VerticalMatchTiles.Num()>=3)
 	{
-		for(int j = 0; j < matColumnTiles.Num(); j++)
+		for(int j = 0; j < VerticalMatchTiles.Num(); j++)
 		{
-			Tiles.Remove(matColumnTiles[j]);
-			Grid[matColumnTiles[j]->RowIndex][matColumnTiles[j]->ColumnIndex] = nullptr;
-			matColumnTiles[j]->Destroy();
+			int targetTileIndex = Tiles.Find(VerticalMatchTiles[j]);
+			Tiles[targetTileIndex] = nullptr;
+			VerticalMatchTiles[j]->Destroy();
 		}	
 	}
-	matColumnTiles.Empty();
+	VerticalMatchTiles.Empty();
 }
 
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 {
-	if((tile1->RowIndex == tile2->RowIndex && FMath::Abs(tile1->ColumnIndex - tile2->ColumnIndex) == 1)
-	||(tile1->ColumnIndex == tile2->ColumnIndex && FMath::Abs(tile1->RowIndex - tile2->RowIndex) == 1))
+	int tile1Index = Tiles.Find(tile1);
+	int tile2Index = Tiles.Find(tile2);
+
+	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
 	{
 		FVector loc1 = tile1->GetActorLocation();
 		tile1->SetActorLocation(tile2->GetActorLocation());
 		tile2->SetActorLocation(loc1);
-	
-		int8 tempRowIndex = tile1->RowIndex;
-		tile1->RowIndex = tile2->RowIndex;
-		tile2->RowIndex = tempRowIndex;
 
-		int8 tempColumnIndex = tile1->ColumnIndex;
-		tile1->ColumnIndex = tile2->ColumnIndex;
-		tile2->ColumnIndex = tempColumnIndex;;
-
-		Grid[tile1->RowIndex][tile1->ColumnIndex] = tile1;
-		Grid[tile2->RowIndex][tile2->ColumnIndex] = tile2;
-
+		Tiles[tile1Index] = tile2;
+		Tiles[tile2Index] = tile1;
+		
 		SearchMachingTile(tile1);
 		SearchMachingTile(tile2);
 
@@ -196,22 +199,34 @@ void ATileGrid::MoveTiles()
 
 	bTileMoved = false;
 	
-	for(int i = 1; i < Grid.Num(); i++)
+	for(int i = 1; i < GridRow; i++)
 	{
-		int targetRowIndex = i-1;
-		for(int j = 0; j < Grid[i].Num(); j++)
-		{				
-			if(Grid[i][j] != nullptr && Grid[targetRowIndex][j] == nullptr)
+		for(int j = 0; j < GridColumn; j++)
+		{
+			int tileIndex = GetTileIndexFromGridIndex(i,j);
+			int targetIndex = GetTileIndexFromGridIndex(i-1,j);
+			if(Tiles[tileIndex] != nullptr && Tiles[targetIndex] == nullptr)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Grid[%d][%d]==nullptr"), targetRowIndex, j);
-				Grid[targetRowIndex][j] = Grid[i][j];
-				Grid[targetRowIndex][j]->RowIndex = targetRowIndex;
-				Grid[targetRowIndex][j]->ColumnIndex = j;
-				Grid[targetRowIndex][j]->SetActorLocation(FVector(0, j*100, targetRowIndex*100));				
-				Grid[i][j] = nullptr;
+				Tiles[targetIndex] = Tiles[tileIndex];
+				Tiles[targetIndex]->SetActorLocation(FVector(0, j*100, (i-1)*100));				
+				Tiles[tileIndex] = nullptr;
 
 				bTileMoved = true;
 			}
 		}
 	}
+}
+
+int ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
+{
+	return rowIndex * GridColumn + columnIndex;
+}
+
+int8 ATileGrid::GetGridRowIndexFromTileIndex(int tileIndex)
+{
+	return tileIndex / GridColumn;
+}
+int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
+{
+	return tileIndex % GridColumn;
 }

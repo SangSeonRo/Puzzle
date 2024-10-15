@@ -24,10 +24,13 @@ ATile::ATile()
 	}	
 }
 
-void ATile::SetTile(int8 typeIndex, int8 rowIndex, int8 columnIndex, UMaterialInterface* material)
+void ATile::SetTile(int8 typeIndex, UMaterialInterface* material)
 {
 	TypeIndex = typeIndex;
-	RowIndex = rowIndex;
-	ColumnIndex = columnIndex;
 	StaticMesh->SetMaterial(0, material);
+}
+
+bool ATile::IsMatching(ATile* otherTile)
+{
+	return TypeIndex == otherTile->TypeIndex;
 }
