@@ -57,5 +57,13 @@ void APC_Puzzle::InputSelect(const FInputActionValue& Value)
 				gameInstance->SetSelectedTile(tile);
 			}
 		}
+		else
+		{
+			auto gameInstance = Cast<UGI_Puzzle>(GetWorld()->GetGameInstance());
+			if (gameInstance)
+			{
+				gameInstance->SetSelectedTile(nullptr);
+			}
+		}
 	}
 }

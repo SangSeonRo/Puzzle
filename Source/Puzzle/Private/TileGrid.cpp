@@ -19,13 +19,6 @@ void ATileGrid::BeginPlay()
 	MakeGrid();
 }
 
-// Called every frame
-void ATileGrid::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void ATileGrid::MakeGrid()
 {
 	if(Tiles.Num() > 0)
@@ -65,9 +58,103 @@ void ATileGrid::MakeGrid()
 	}		
 }
 
-void ATileGrid::SearchMachingTiles()
+void ATileGrid::SearchMachingTile(ATile* tile)
 {
+	//Grid[tile->RowIndex][tile->ColumnIndex]
+	UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
+
+	TArray<ATile*> matRowTiles;
+	matRowTiles.Empty();
+	matRowTiles.Add(tile);
+	int8 i = tile->RowIndex;
+	while(true)
+	{
+		--i;
+		if(i<0)
+			break;
+
+		if(Grid[i][tile->ColumnIndex] == nullptr)
+			break;
+		if(tile->TypeIndex == Grid[i][tile->ColumnIndex]->TypeIndex)
+			matRowTiles.Add(Grid[i][tile->ColumnIndex]);
+		else
+			break;
+	}
 	
+	i = tile->RowIndex;
+	while(true)
+	{
+		++i;
+		if(i > Grid.Num()-1)
+			break;
+
+		if(Grid[i][tile->ColumnIndex] == nullptr)
+			break;
+		if(tile->TypeIndex == Grid[i][tile->ColumnIndex]->TypeIndex)
+			matRowTiles.Add(Grid[i][tile->ColumnIndex]);
+		else
+			break;
+	}
+	
+	TArray<ATile*> matColumnTiles;
+	matColumnTiles.Empty();
+	matColumnTiles.Add(tile);
+	i = tile->ColumnIndex;
+	while(true)
+	{
+		--i;
+		if(i<0)
+			break;
+
+		if(Grid[tile->RowIndex][i] == nullptr)
+			break;
+			
+		if(tile->TypeIndex == Grid[tile->RowIndex][i]->TypeIndex)
+			matColumnTiles.Add(Grid[tile->RowIndex][i]);
+		else
+			break;
+	}
+	
+	i = tile->ColumnIndex;
+	while(true)
+	{
+		++i;
+		if(i > Grid[tile->RowIndex].Num()-1)
+			break;
+
+		if(Grid[tile->RowIndex][i] == nullptr)
+			break;
+		
+		if(tile->TypeIndex == Grid[tile->RowIndex][i]->TypeIndex)
+			matColumnTiles.Add(Grid[tile->RowIndex][i]);
+		else
+			break;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("maching Row tile : %d"), matRowTiles.Num());
+	UE_LOG(LogTemp, Warning, TEXT("maching Column tile : %d"), matColumnTiles.Num());
+	
+	if(matRowTiles.Num() >= 3)
+	{
+		for(int j = 0; j < matRowTiles.Num(); j++)
+		{
+			Tiles.Remove(matRowTiles[j]);
+			Grid[matRowTiles[j]->RowIndex][matRowTiles[j]->ColumnIndex] = nullptr;
+			matRowTiles[j]->Destroy();
+		}		
+	}
+	matRowTiles.Empty();
+
+	if(matColumnTiles.Num()>=3)
+	{
+		for(int j = 0; j < matColumnTiles.Num(); j++)
+		{
+			Tiles.Remove(matColumnTiles[j]);
+			Grid[matColumnTiles[j]->RowIndex][matColumnTiles[j]->ColumnIndex] = nullptr;
+			matColumnTiles[j]->Destroy();
+		}	
+	}
+	matColumnTiles.Empty();
 }
 
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
@@ -86,9 +173,37 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		int8 tempColumnIndex = tile1->ColumnIndex;
 		tile1->ColumnIndex = tile2->ColumnIndex;
 		tile2->ColumnIndex = tempColumnIndex;;
+
+		Grid[tile1->RowIndex][tile1->ColumnIndex] = tile1;
+		Grid[tile2->RowIndex][tile2->ColumnIndex] = tile2;
+
+		SearchMachingTile(tile1);
+		SearchMachingTile(tile2);
+
+		MoveTiles();
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
 	}	
+}
+void ATileGrid::MoveTiles()
+{
+	UE_LOG(LogTemp, Warning, TEXT("MoveTiles"));
+
+	for(int i = 1; i < Grid.Num(); i++)
+	{
+		for(int j = 0; j < Grid[i].Num(); j++)
+		{
+			if(Grid[i-1][j] == nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Grid[%d][%d]==nullptr"), i-1, j);
+				Grid[i-1][j] = Grid[i][j];
+				Grid[i-1][j]->RowIndex = (i-1);
+				Grid[i-1][j]->ColumnIndex = j;
+				Grid[i-1][j]->SetActorLocation(FVector(0, j*100, (i-1)*100));				
+				Grid[i][j] = nullptr;	
+			}
+		}
+	}
 }

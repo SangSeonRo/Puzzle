@@ -22,16 +22,16 @@ void UGI_Puzzle::SetSelectedTile(ATile* Tile)
 			if(tileGrid)
 			{
 				tileGrid->SwapTile(SelectedTile,PreSelectedTile);
-			}			
+			}
+			
+			UE_LOG(LogTemp, Display, TEXT("Select Tile : %s"), *SelectedTile->GetName());
+			UE_LOG(LogTemp, Display, TEXT("PreSelect Tile : %s"), *PreSelectedTile->GetName());
+
+			PreSelectedTile = SelectedTile = nullptr;
 		}
 	}
 	else
 	{
-		PreSelectedTile = SelectedTile = nullptr;
-	}
-
-	if(SelectedTile!=nullptr)
-		UE_LOG(LogTemp, Display, TEXT("Select Tile : %s"), *SelectedTile->GetName());
-	if(PreSelectedTile!=nullptr)
-		UE_LOG(LogTemp, Display, TEXT("PreSelect Tile : %s"), *PreSelectedTile->GetName());
+		
+	}	
 }

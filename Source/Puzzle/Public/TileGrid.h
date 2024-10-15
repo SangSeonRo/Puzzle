@@ -21,8 +21,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, Category = "Grid Setting")
 	int8 GridRow = 6;
@@ -40,6 +38,7 @@ public:
 	TArray<TArray<ATile*>> Grid;
 
 	void MakeGrid();
-	void SearchMachingTiles();
+	void SearchMachingTile(ATile* tile);
 	void SwapTile(ATile* tile1, ATile* tile2);
+	void MoveTiles();
 };
