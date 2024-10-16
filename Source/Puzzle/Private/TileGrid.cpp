@@ -46,7 +46,18 @@ void ATileGrid::MakeGrid()
 				Tiles[i*GridColumn + j] = tile;
 			}
 		}
-	}		
+	}
+
+	do
+	{
+		while(HasEmpty())
+		{
+			MoveTiles();
+			FillGrid();
+		}
+
+		MatchingTileDestroy();
+	}while(HasEmpty());
 }
 
 void ATileGrid::FillGrid()
