@@ -6,6 +6,7 @@
 #include "GI_Puzzle.h"
 #include "Tile.h"
 #include "TileGrid.h"
+#include "Kismet/GameplayStatics.h"
 
 void APC_Puzzle::SetupInputComponent()
 {
@@ -45,23 +46,16 @@ void APC_Puzzle::InputSelect(const FInputActionValue& Value)
 
 		FHitResult HitResult;
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-
-		if (HitResult.bBlockingHit)
+		auto gameInstance = Cast<UGI_Puzzle>(GetWorld()->GetGameInstance());
+		if (gameInstance)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitResult.GetActor()->GetName());
-			ATile* tile = Cast<ATile>(HitResult.GetActor());
-			
-			auto gameInstance = Cast<UGI_Puzzle>(GetWorld()->GetGameInstance());
-			if (gameInstance)
+			if (HitResult.bBlockingHit)
 			{
+				ATile* tile = Cast<ATile>(HitResult.GetActor());
 				gameInstance->SetSelectedTile(tile);
-			}
-		}
-		else
-		{
-			auto gameInstance = Cast<UGI_Puzzle>(GetWorld()->GetGameInstance());
-			if (gameInstance)
-			{
+			}		
+			else
+			{			
 				gameInstance->SetSelectedTile(nullptr);
 			}
 		}

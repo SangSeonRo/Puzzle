@@ -29,15 +29,31 @@ void UGI_Puzzle::ResetGameState()
 {
 	PlayerScore = 0;
 	RemainingMoves = 30;
+
+	PreSelectedTile = SelectedTile = nullptr;
 }
 
 void UGI_Puzzle::SetSelectedTile(ATile* Tile)
 {
 	if (Tile != nullptr)
 	{
-		PreSelectedTile = SelectedTile;
-		SelectedTile = Tile;
+		if(PreSelectedTile != nullptr)
+			PreSelectedTile->SelectTile(false);
 
+		if(SelectedTile == Tile)
+		{
+			SelectedTile->SelectTile(false);
+			PreSelectedTile = SelectedTile = nullptr;
+			return;
+		}
+		
+		PreSelectedTile = SelectedTile;
+		if(PreSelectedTile != nullptr)
+			PreSelectedTile->SelectTile(true);
+		
+		SelectedTile = Tile;
+		SelectedTile->SelectTile(true);
+		
 		if(SelectedTile && PreSelectedTile)
 		{
 			auto temp = UGameplayStatics::GetActorOfClass(GetWorld(), ATileGrid::StaticClass());
@@ -48,10 +64,9 @@ void UGI_Puzzle::SetSelectedTile(ATile* Tile)
 			{
 				tileGrid->SwapTile(SelectedTile,PreSelectedTile);
 			}
-			
-			UE_LOG(LogTemp, Display, TEXT("Select Tile : %s"), *SelectedTile->GetName());
-			UE_LOG(LogTemp, Display, TEXT("PreSelect Tile : %s"), *PreSelectedTile->GetName());
 
+			PreSelectedTile->SelectTile(false);
+			SelectedTile->SelectTile(false);
 			PreSelectedTile = SelectedTile = nullptr;
 		}
 	}

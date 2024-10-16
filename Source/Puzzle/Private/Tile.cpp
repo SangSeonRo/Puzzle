@@ -34,3 +34,18 @@ bool ATile::IsMatching(ATile* otherTile)
 {
 	return TypeIndex == otherTile->TypeIndex;
 }
+
+void ATile::SelectTile(bool isSelected)
+{
+	if(BoxComponent == nullptr)
+		return;
+	
+	if(isSelected)
+	{
+		StaticMesh->SetRelativeScale3D(FVector(0.8f));
+	}
+	else
+	{
+		StaticMesh->SetRelativeScale3D(FVector(0.95f));
+	}
+}

@@ -27,4 +27,6 @@ public:
 	int8 TypeIndex = -1;
 
 	bool IsMatching(ATile* otherTile);
+
+	void SelectTile(bool isSelected);
 };

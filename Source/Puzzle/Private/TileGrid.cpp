@@ -19,8 +19,6 @@ ATileGrid::ATileGrid()
 void ATileGrid::BeginPlay()
 {
 	Super::BeginPlay();
-
-	MakeGrid();
 }
 
 void ATileGrid::MakeGrid()
@@ -46,7 +44,18 @@ void ATileGrid::MakeGrid()
 				Tiles[i*GridColumn + j] = tile;
 			}
 		}
-	}		
+	}
+
+	do
+	{
+		while(HasEmpty())
+		{
+			MoveTiles();
+			FillGrid();
+		}
+
+		MatchingTileDestroy();
+	}while(HasEmpty());
 }
 
 void ATileGrid::FillGrid()
@@ -67,12 +76,12 @@ void ATileGrid::FillGrid()
 	}
 }
 
-TArray<ATile*> ATileGrid::SearchMachingTile(ATile* tile)
+TArray<ATile*> ATileGrid::SearchMatchingTile(ATile* tile)
 {
 	//Grid[tile->RowIndex][tile->ColumnIndex]
 	UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
 	
-	int tileIndex = Tiles.Find(tile);
+	int tileIndex = GetTileIndex(tile);
 	int8 gridRowIndex = GetGridRowIndexFromTileIndex(tileIndex);
 	int8 gridColumnIndex = GetGridColumnFromTileIndex(tileIndex);
 
@@ -192,7 +201,7 @@ void ATileGrid::MatchingTileDestroy()
 	{
 		if(Tiles[i] != nullptr)
 		{
-			TArray<ATile*> tempTiles = SearchMachingTile(Tiles[i]);
+			TArray<ATile*> tempTiles = SearchMatchingTile(Tiles[i]);
 
 			for(int j = 0; j < tempTiles.Num(); j++)
 			{
@@ -204,23 +213,34 @@ void ATileGrid::MatchingTileDestroy()
 		
 	for(int i = 0; i < matchTiles.Num(); i++)
 	{
-		int targetTileIndex = Tiles.Find(matchTiles[i]);
+		int targetTileIndex = GetTileIndex(matchTiles[i]);
 		Tiles[targetTileIndex] = nullptr;
 		matchTiles[i]->Destroy();
 	}
 }
 
+bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
+{
+	int tile1Index = GetTileIndex(tile1);
+	int tile2Index = GetTileIndex(tile2);
+	
+	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
+		return true;
+
+	return false;
+}
+
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 {
-	int tile1Index = Tiles.Find(tile1);
-	int tile2Index = Tiles.Find(tile2);
-
-	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
+	if(IsSwapAble(tile1, tile2))
 	{
 		FVector loc1 = tile1->GetActorLocation();
 		tile1->SetActorLocation(tile2->GetActorLocation());
 		tile2->SetActorLocation(loc1);
 
+		int tile1Index = GetTileIndex(tile1);
+		int tile2Index = GetTileIndex(tile2);
+		
 		Tiles[tile1Index] = tile2;
 		Tiles[tile2Index] = tile1;
 
@@ -273,6 +293,11 @@ int8 ATileGrid::GetGridRowIndexFromTileIndex(int tileIndex)
 int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
 {
 	return tileIndex % GridColumn;
+}
+
+int ATileGrid::GetTileIndex(ATile* tile)
+{
+	return Tiles.Find(tile);
 }
 
 bool ATileGrid::HasEmpty()

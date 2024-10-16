@@ -13,5 +13,8 @@ UCLASS()
 class PUZZLE_API AGMB_Puzzle : public AGameModeBase
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
 	
 };
