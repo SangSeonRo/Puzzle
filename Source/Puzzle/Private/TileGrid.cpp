@@ -49,13 +49,29 @@ void ATileGrid::MakeGrid()
 	}		
 }
 
-void ATileGrid::SearchMachingTile(ATile* tile)
+void ATileGrid::FillGrid()
+{
+	int lastIndex = GridRow * GridColumn - 1;
+	for(int i = GridRow * (GridColumn-1); i < GridRow * GridColumn; i++)
+	{
+		if(Tiles[i] == nullptr)
+		{
+			int8 typeIndex = FMath::RandRange(0, Materials.Num()-1);
+			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, GetGridColumnFromTileIndex(i)*100, GetGridRowIndexFromTileIndex(i)*100), FRotator::ZeroRotator);
+			if(tile)
+			{
+				tile->SetTile(typeIndex, Materials[typeIndex]);
+				Tiles[i] = tile;
+			}
+		}
+	}
+}
+
+TArray<ATile*> ATileGrid::SearchMachingTile(ATile* tile)
 {
 	//Grid[tile->RowIndex][tile->ColumnIndex]
 	UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
 	
-	
-
 	int tileIndex = Tiles.Find(tile);
 	int8 gridRowIndex = GetGridRowIndexFromTileIndex(tileIndex);
 	int8 gridColumnIndex = GetGridColumnFromTileIndex(tileIndex);
@@ -142,28 +158,56 @@ void ATileGrid::SearchMachingTile(ATile* tile)
 	
 	UE_LOG(LogTemp, Warning, TEXT("maching_Horizontal : %d"), HorizontalMatchTiles.Num());
 	UE_LOG(LogTemp, Warning, TEXT("maching_Vertical : %d"), VerticalMatchTiles.Num());
-	
+
+	TArray<ATile*> returnValue;
+	returnValue.Empty();
+
 	if(HorizontalMatchTiles.Num() >= 3)
 	{
-		for(int j = 0; j < HorizontalMatchTiles.Num(); j++)
+		for(int i = 0; i < HorizontalMatchTiles.Num(); i++)
 		{
-			int targetTileIndex = Tiles.Find(HorizontalMatchTiles[j]);
-			Tiles[targetTileIndex] = nullptr;
-			HorizontalMatchTiles[j]->Destroy();
-		}		
+			returnValue.Add(HorizontalMatchTiles[i]);
+		}
 	}
-	HorizontalMatchTiles.Empty();
-	
 	if(VerticalMatchTiles.Num()>=3)
 	{
-		for(int j = 0; j < VerticalMatchTiles.Num(); j++)
+		for(int i = 0; i < VerticalMatchTiles.Num(); i++)
 		{
-			int targetTileIndex = Tiles.Find(VerticalMatchTiles[j]);
-			Tiles[targetTileIndex] = nullptr;
-			VerticalMatchTiles[j]->Destroy();
+			if(returnValue.Find(VerticalMatchTiles[i]) == INDEX_NONE)
+				returnValue.Add(VerticalMatchTiles[i]);
 		}	
 	}
+
+	HorizontalMatchTiles.Empty();
 	VerticalMatchTiles.Empty();
+
+	return returnValue;
+}
+
+void ATileGrid::MatchingTileDestroy()
+{
+	TArray<ATile*> matchTiles;
+	matchTiles.Empty();
+	for(int i = 0; i < Tiles.Num(); i++)
+	{
+		if(Tiles[i] != nullptr)
+		{
+			TArray<ATile*> tempTiles = SearchMachingTile(Tiles[i]);
+
+			for(int j = 0; j < tempTiles.Num(); j++)
+			{
+				if(matchTiles.Find(tempTiles[j]) == INDEX_NONE)
+					matchTiles.Add(tempTiles[j]);
+			}
+		}
+	}
+		
+	for(int i = 0; i < matchTiles.Num(); i++)
+	{
+		int targetTileIndex = Tiles.Find(matchTiles[i]);
+		Tiles[targetTileIndex] = nullptr;
+		matchTiles[i]->Destroy();
+	}
 }
 
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
@@ -179,26 +223,28 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 
 		Tiles[tile1Index] = tile2;
 		Tiles[tile2Index] = tile1;
-		
-		SearchMachingTile(tile1);
-		SearchMachingTile(tile2);
 
-		do {
-			MoveTiles();
-		} while (bTileMoved);	
-		
+		do
+		{
+			while(HasEmpty())
+			{
+				MoveTiles();
+				FillGrid();
+			}
+
+			MatchingTileDestroy();
+		}while(HasEmpty());
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
 	}	
 }
+
 void ATileGrid::MoveTiles()
 {
 	UE_LOG(LogTemp, Warning, TEXT("MoveTiles"));
 
-	bTileMoved = false;
-	
 	for(int i = 1; i < GridRow; i++)
 	{
 		for(int j = 0; j < GridColumn; j++)
@@ -210,8 +256,6 @@ void ATileGrid::MoveTiles()
 				Tiles[targetIndex] = Tiles[tileIndex];
 				Tiles[targetIndex]->SetActorLocation(FVector(0, j*100, (i-1)*100));				
 				Tiles[tileIndex] = nullptr;
-
-				bTileMoved = true;
 			}
 		}
 	}
@@ -229,4 +273,17 @@ int8 ATileGrid::GetGridRowIndexFromTileIndex(int tileIndex)
 int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
 {
 	return tileIndex % GridColumn;
+}
+
+bool ATileGrid::HasEmpty()
+{
+	for(int i = 0; i < Tiles.Num(); i++)
+	{
+		if(Tiles[i] == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("HasEmpty"));
+			return true;
+		}
+	}
+	return false;
 }

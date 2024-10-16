@@ -35,12 +35,13 @@ public:
 	TArray<ATile*> Tiles;
 
 	void MakeGrid();
-	void SearchMachingTile(ATile* tile);
+	void FillGrid();
+	TArray<ATile*> SearchMachingTile(ATile* tile);
+	void MatchingTileDestroy();
 	void SwapTile(ATile* tile1, ATile* tile2);
 	void MoveTiles();
 	int GetTileIndexFromGridIndex(int8 row, int8 column);
 	int8 GetGridRowIndexFromTileIndex(int tileIndex);
 	int8 GetGridColumnFromTileIndex(int tileIndex);
-
-	bool bTileMoved = false;
+	bool HasEmpty();
 };
