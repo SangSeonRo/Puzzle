@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameStateSubject.h"
+#include "MainWidget.h"
 #include "GameFramework/GameModeBase.h"
 #include "GMB_Puzzle.generated.h"
 
@@ -16,5 +18,11 @@ class PUZZLE_API AGMB_Puzzle : public AGameModeBase
 
 protected:
 	virtual void BeginPlay() override;
+
+public:
+	UGameStateSubject* ObserverGameState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMainWidget* mainWidget;
 	
 };

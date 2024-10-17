@@ -30,9 +30,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Functions")
 	void ResetGameState();
-	
-	ATile* PreSelectedTile;
-	ATile* SelectedTile;
-
-	void SetSelectedTile(ATile* Tile);
 };

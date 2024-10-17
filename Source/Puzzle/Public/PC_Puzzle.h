@@ -4,31 +4,47 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
-#include "InputMappingContext.h"
+#include "Tile.h"
 #include "PC_Puzzle.generated.h"
 
 /**
  * 
  */
+class ICommand;
 UCLASS()
 class PUZZLE_API APC_Puzzle : public APlayerController
 {
 	GENERATED_BODY()
-
+	
 protected:
 	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
-	void PerformLineTrace();
 
-private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
+public:
+	UPROPERTY(EditAnywhere, Blueprintable, Category="Input")
 	UInputMappingContext* DefaultMappingContext;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, Blueprintable, Category="Input")
 	UInputAction* IA_Select;
-
+	
 	void InputSelect(const FInputActionValue& Value);
+	void ExcuteCommand();
+	void UndoLastCommand();
+	
+private:
+	
+	void Select(AActor* Tile);
+	
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<ATile*> SelectTiles;
+	
+	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<ICommand*> CommandHistory;
+
+
 };

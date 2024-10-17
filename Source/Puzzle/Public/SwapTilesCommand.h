@@ -14,13 +14,10 @@ class PUZZLE_API SwapTilesCommand : public ICommand
 private:
 	ATile* FirstTile;
 	ATile* SecondTile;
-	int8 FirstTileTypeIndex;
-	int8 SecondTileTypeIndex;
-	
+		
 public:
 	SwapTilesCommand(ATile* InFirstTile, ATile* InSecondTile);
-	
-	virtual void Execute() override;
 
-	virtual void Undo() override;		
+	virtual void Execute() override;
+	virtual void Undo() override;
 };

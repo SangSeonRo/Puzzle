@@ -34,13 +34,26 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Grid")
 	TArray<ATile*> Tiles;
 
+	UFUNCTION()
 	void MakeGrid();
+	UFUNCTION()
 	void FillGrid();
+
 	TArray<ATile*> SearchMatchingTile(ATile* tile);
-	void MatchingTileDestroy();
+
+	UFUNCTION()
+	int MatchingTileDestroy();
+
+	UFUNCTION()
 	bool IsSwapAble(ATile* tile1, ATile* tile2);
+	void UndoSwapTile(ATile* tile1, ATile* tile2);
+
+	UFUNCTION()
 	void SwapTile(ATile* tile1, ATile* tile2);
+
+	UFUNCTION()
 	void MoveTiles();
+
 	int GetTileIndexFromGridIndex(int8 row, int8 column);
 	int8 GetGridRowIndexFromTileIndex(int tileIndex);
 	int8 GetGridColumnFromTileIndex(int tileIndex);

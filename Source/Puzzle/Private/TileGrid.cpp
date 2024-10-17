@@ -3,9 +3,9 @@
 
 #include "TileGrid.h"
 
-#include "Chaos/PBDRigidsEvolution.h"
-#include "Debug/ReporterGraph.h"
-#include "SceneQueries/SceneSnappingManager.h"
+#include "GMB_Puzzle.h"
+#include "PC_Puzzle.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATileGrid::ATileGrid()
@@ -78,8 +78,7 @@ void ATileGrid::FillGrid()
 
 TArray<ATile*> ATileGrid::SearchMatchingTile(ATile* tile)
 {
-	//Grid[tile->RowIndex][tile->ColumnIndex]
-	UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Searching maching tile : %s"), *tile->GetName());
 	
 	int tileIndex = GetTileIndex(tile);
 	int8 gridRowIndex = GetGridRowIndexFromTileIndex(tileIndex);
@@ -165,13 +164,9 @@ TArray<ATile*> ATileGrid::SearchMatchingTile(ATile* tile)
 			break;
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("maching_Horizontal : %d"), HorizontalMatchTiles.Num());
-	UE_LOG(LogTemp, Warning, TEXT("maching_Vertical : %d"), VerticalMatchTiles.Num());
-
 	TArray<ATile*> returnValue;
-	returnValue.Empty();
 
-	if(HorizontalMatchTiles.Num() >= 3)
+	if(HorizontalMatchTiles.Num()>=3)
 	{
 		for(int i = 0; i < HorizontalMatchTiles.Num(); i++)
 		{
@@ -187,14 +182,12 @@ TArray<ATile*> ATileGrid::SearchMatchingTile(ATile* tile)
 		}	
 	}
 
-	HorizontalMatchTiles.Empty();
-	VerticalMatchTiles.Empty();
-
 	return returnValue;
 }
 
-void ATileGrid::MatchingTileDestroy()
+int ATileGrid::MatchingTileDestroy()
 {
+	int DestoryTileCount = 0;
 	TArray<ATile*> matchTiles;
 	matchTiles.Empty();
 	for(int i = 0; i < Tiles.Num(); i++)
@@ -210,13 +203,14 @@ void ATileGrid::MatchingTileDestroy()
 			}
 		}
 	}
-		
+	DestoryTileCount = matchTiles.Num();	
 	for(int i = 0; i < matchTiles.Num(); i++)
 	{
 		int targetTileIndex = GetTileIndex(matchTiles[i]);
 		Tiles[targetTileIndex] = nullptr;
 		matchTiles[i]->Destroy();
 	}
+	return DestoryTileCount;
 }
 
 bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
@@ -228,6 +222,26 @@ bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
 		return true;
 
 	return false;
+}
+
+void ATileGrid::UndoSwapTile(ATile* tile1, ATile* tile2)
+{
+	if(IsSwapAble(tile1, tile2))
+	{
+		FVector loc1 = tile1->GetActorLocation();
+		tile1->SetActorLocation(tile2->GetActorLocation());
+		tile2->SetActorLocation(loc1);
+
+		int tile1Index = GetTileIndex(tile1);
+		int tile2Index = GetTileIndex(tile2);
+		
+		Tiles[tile1Index] = tile2;
+		Tiles[tile2Index] = tile1;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
+	}	
 }
 
 void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
@@ -244,6 +258,7 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		Tiles[tile1Index] = tile2;
 		Tiles[tile2Index] = tile1;
 
+		int destroyTileCount = 0;
 		do
 		{
 			while(HasEmpty())
@@ -252,8 +267,28 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 				FillGrid();
 			}
 
-			MatchingTileDestroy();
+			destroyTileCount += MatchingTileDestroy();
 		}while(HasEmpty());
+
+		if(destroyTileCount == 0)
+		{
+			auto temppc = UGameplayStatics::GetPlayerController(GetWorld(),0);
+			APC_Puzzle* pc = Cast<APC_Puzzle>(temppc);
+			if(pc)
+			{
+				pc->UndoLastCommand();
+			}
+		}
+		else
+		{
+			// auto tempMode = UGameplayStatics::GetGameMode(GetWorld());
+			// AGMB_Puzzle* mode = Cast<AGMB_Puzzle>(tempMode);
+			// if(mode)
+			// {
+			// 	mode->ObserverGameState->IncreasePlayerScore(destroyTileCount*10);
+			// 	mode->ObserverGameState->DecreaseRemainCount();
+			// }
+		}
 	}
 	else
 	{

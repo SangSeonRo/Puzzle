@@ -2,11 +2,9 @@
 
 
 #include "PC_Puzzle.h"
-
-#include "GI_Puzzle.h"
+#include "SwapTilesCommand.h"
 #include "Tile.h"
-#include "TileGrid.h"
-#include "Kismet/GameplayStatics.h"
+#include "EnhancedInputComponent.h"
 
 void APC_Puzzle::SetupInputComponent()
 {
@@ -46,18 +44,61 @@ void APC_Puzzle::InputSelect(const FInputActionValue& Value)
 
 		FHitResult HitResult;
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-		auto gameInstance = Cast<UGI_Puzzle>(GetWorld()->GetGameInstance());
-		if (gameInstance)
+		Select(HitResult.GetActor());
+	}
+}
+
+void APC_Puzzle::Select(AActor* selectedActor)
+{
+	if(selectedActor != nullptr && selectedActor->IsA(ATile::StaticClass()))
+	{
+		ATile* SelectedTile = Cast<ATile>(selectedActor);
+
+		if(SelectTiles.Find(SelectedTile) == INDEX_NONE)
 		{
-			if (HitResult.bBlockingHit)
+			SelectedTile->SelectTile(true);
+			SelectTiles.Add(SelectedTile);
+		}
+		
+		if(SelectTiles.Num() > 2)
+		{
+			SelectTiles[0]->SelectTile(false);
+			SelectTiles.RemoveAt(0);
+		}
+
+		if(SelectTiles.Num() == 2)
+		{	
+			ExcuteCommand();
+
+			while(SelectTiles.Num() > 0)
 			{
-				ATile* tile = Cast<ATile>(HitResult.GetActor());
-				gameInstance->SetSelectedTile(tile);
-			}		
-			else
-			{			
-				gameInstance->SetSelectedTile(nullptr);
+				SelectTiles[0]->SelectTile(false);
+				SelectTiles.RemoveAt(0);
 			}
 		}
+	}
+	else
+	{
+		while(SelectTiles.Num() > 0)
+		{
+			SelectTiles[0]->SelectTile(false);
+			SelectTiles.RemoveAt(0);
+		}
+	}		
+}
+
+void APC_Puzzle::ExcuteCommand()
+{
+	ICommand* SwapCommand = new SwapTilesCommand(SelectTiles[0],SelectTiles[1]);
+	SwapCommand->Execute();
+	CommandHistory.Push(SwapCommand);
+}
+
+void APC_Puzzle::UndoLastCommand()
+{
+	if(CommandHistory.Num() > 0)
+	{
+		CommandHistory.Last()->Undo();
+		CommandHistory.Pop();		
 	}
 }
