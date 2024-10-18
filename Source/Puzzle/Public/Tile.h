@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
+
+class UBoxComponent;
 
 UCLASS()
 class PUZZLE_API ATile : public AActor
@@ -16,17 +17,17 @@ public:
 	// Sets default values for this actor's properties
 	ATile();
 	void SetTile(int8 typeIndex, UMaterialInterface* material);
-
-	UPROPERTY(EditAnywhere)
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* StaticMesh;
-
-	UPROPERTY(EditAnywhere)
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* BoxComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	int8 TypeIndex = -1;
-
-	bool IsMatching(ATile* otherTile);
-
-	void SelectTile(bool isSelected);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
+	int32 TypeIndex;
+	
+public:
+	bool isMatching(ATile* otherTile);
+	void Focusing(bool isFocus);
 };

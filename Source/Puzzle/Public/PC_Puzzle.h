@@ -5,46 +5,23 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputAction.h"
-#include "Tile.h"
+#include "EnhancedInputComponent.h"
+#include "InputActionValue.h"
 #include "PC_Puzzle.generated.h"
 
-/**
- * 
- */
-class ICommand;
 UCLASS()
 class PUZZLE_API APC_Puzzle : public APlayerController
 {
 	GENERATED_BODY()
-	
 protected:
-	virtual void SetupInputComponent() override;
 	virtual void BeginPlay() override;
-
-public:
-	UPROPERTY(EditAnywhere, Blueprintable, Category="Input")
-	UInputMappingContext* DefaultMappingContext;
-
-	UPROPERTY(EditAnywhere, Blueprintable, Category="Input")
-	UInputAction* IA_Select;
-	
-	void InputSelect(const FInputActionValue& Value);
-	void ExcuteCommand();
-	void UndoLastCommand();
-	
+	virtual void SetupInputComponent() override;
 private:
-	
-	void Select(AActor* Tile);
-	
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<ATile*> SelectTiles;
-	
-	
+	void InputAction_Mouse_BT_Left(const FInputActionValue& value);	
+public:
+	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
+	UInputMappingContext* InputMappingContext;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TArray<ICommand*> CommandHistory;
-
-
+	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
+	UInputAction* IA_Mouse_BT_Left;
 };

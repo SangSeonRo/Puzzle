@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Tile.h"
 #include "Engine/GameInstance.h"
 #include "GI_Puzzle.generated.h"
 
@@ -15,19 +14,18 @@ class PUZZLE_API UGI_Puzzle : public UGameInstance
 {
 	GENERATED_BODY()
 
+private:
+	int32 _CurrentScore;
+	int32 _RemainingMoves;
+
 public:
-	UGI_Puzzle();
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Game Data")
-	int32 PlayerScore;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Game Data")
-	int32 RemainingMoves;
-
-	UFUNCTION(BlueprintCallable, Category = "Game Functions")
-	void AddScore(int32 points);
-
-	UFUNCTION(BlueprintCallable, Category = "Game Functions")
-	void DecreaseMoves();
-
-	UFUNCTION(BlueprintCallable, Category = "Game Functions")
-	void ResetGameState();
+	void Reset(){
+		_CurrentScore = 0;
+		_RemainingMoves = 30;
+	}
+	
+	void AddScore(int32 addScore){ _CurrentScore+=addScore;	}
+	void DecreaseMoves(){ _RemainingMoves--; }
+	int32 CurrentScore() const { return _CurrentScore; }
+	int32 RemainingMoves() const { return _RemainingMoves; }
 };

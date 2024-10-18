@@ -6,22 +6,9 @@
 // Sets default values
 ATile::ATile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
-	SetRootComponent(BoxComponent);
-	BoxComponent->SetBoxExtent(FVector(50.0f));
-
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMesh->SetupAttachment(BoxComponent);
-	StaticMesh->SetRelativeScale3D(FVector(0.95f));
-
-	ConstructorHelpers::FObjectFinder<UStaticMesh> InitMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
-	if (InitMesh.Succeeded())
-	{
-		StaticMesh->SetStaticMesh(InitMesh.Object);
-	}	
 }
 
 void ATile::SetTile(int8 typeIndex, UMaterialInterface* material)
@@ -30,17 +17,20 @@ void ATile::SetTile(int8 typeIndex, UMaterialInterface* material)
 	StaticMesh->SetMaterial(0, material);
 }
 
-bool ATile::IsMatching(ATile* otherTile)
+bool ATile::isMatching(ATile* otherTile)
 {
+	if (otherTile == nullptr)
+		return false;
+	
 	return TypeIndex == otherTile->TypeIndex;
 }
 
-void ATile::SelectTile(bool isSelected)
+void ATile::Focusing(bool isFocus)
 {
-	if(BoxComponent == nullptr)
+	if(StaticMesh == nullptr)
 		return;
 	
-	if(isSelected)
+	if(isFocus)
 	{
 		StaticMesh->SetRelativeScale3D(FVector(0.8f));
 	}

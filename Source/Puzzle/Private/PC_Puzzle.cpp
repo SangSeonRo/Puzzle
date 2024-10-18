@@ -2,9 +2,16 @@
 
 
 #include "PC_Puzzle.h"
-#include "SwapTilesCommand.h"
-#include "Tile.h"
-#include "EnhancedInputComponent.h"
+
+void APC_Puzzle::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//마우스포인터 활성화.
+	bShowMouseCursor = true;
+	FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
+}
 
 void APC_Puzzle::SetupInputComponent()
 {
@@ -14,27 +21,19 @@ void APC_Puzzle::SetupInputComponent()
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		// 매핑 컨텍스트를 추가하여 입력 활성화
-		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		Subsystem->ClearAllMappings();
+		Subsystem->AddMappingContext(InputMappingContext, 0);
 	}
 
 	// Enhanced Input Component 설정
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		// Move 액션 바인딩 (축 입력)
-		EnhancedInputComponent->BindAction(IA_Select, ETriggerEvent::Completed, this, &APC_Puzzle::InputSelect);
+		EnhancedInputComponent->BindAction(IA_Mouse_BT_Left, ETriggerEvent::Completed, this, &APC_Puzzle::InputAction_Mouse_BT_Left);
 	}
 }
 
-void APC_Puzzle::BeginPlay()
-{
-	Super::BeginPlay();
-
-	bShowMouseCursor = true;
-	FInputModeGameAndUI InputMode;
-	SetInputMode(InputMode);
-}
-
-void APC_Puzzle::InputSelect(const FInputActionValue& Value)
+void APC_Puzzle::InputAction_Mouse_BT_Left(const FInputActionValue& value)
 {
 	FVector WorldLocation, WorldDirection;
 	if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
@@ -44,61 +43,8 @@ void APC_Puzzle::InputSelect(const FInputActionValue& Value)
 
 		FHitResult HitResult;
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-		Select(HitResult.GetActor());
-	}
-}
 
-void APC_Puzzle::Select(AActor* selectedActor)
-{
-	if(selectedActor != nullptr && selectedActor->IsA(ATile::StaticClass()))
-	{
-		ATile* SelectedTile = Cast<ATile>(selectedActor);
-
-		if(SelectTiles.Find(SelectedTile) == INDEX_NONE)
-		{
-			SelectedTile->SelectTile(true);
-			SelectTiles.Add(SelectedTile);
-		}
-		
-		if(SelectTiles.Num() > 2)
-		{
-			SelectTiles[0]->SelectTile(false);
-			SelectTiles.RemoveAt(0);
-		}
-
-		if(SelectTiles.Num() == 2)
-		{	
-			ExcuteCommand();
-
-			while(SelectTiles.Num() > 0)
-			{
-				SelectTiles[0]->SelectTile(false);
-				SelectTiles.RemoveAt(0);
-			}
-		}
-	}
-	else
-	{
-		while(SelectTiles.Num() > 0)
-		{
-			SelectTiles[0]->SelectTile(false);
-			SelectTiles.RemoveAt(0);
-		}
-	}		
-}
-
-void APC_Puzzle::ExcuteCommand()
-{
-	ICommand* SwapCommand = new SwapTilesCommand(SelectTiles[0],SelectTiles[1]);
-	SwapCommand->Execute();
-	CommandHistory.Push(SwapCommand);
-}
-
-void APC_Puzzle::UndoLastCommand()
-{
-	if(CommandHistory.Num() > 0)
-	{
-		CommandHistory.Last()->Undo();
-		CommandHistory.Pop();		
+		//타일그리드로 전달.
+		//HitResult.GetActor()
 	}
 }
