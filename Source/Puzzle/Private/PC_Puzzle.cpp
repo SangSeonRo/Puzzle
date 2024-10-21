@@ -35,15 +35,11 @@ void APC_Puzzle::SetupInputComponent()
 
 void APC_Puzzle::InputAction_Mouse_BT_Left(const FInputActionValue& value)
 {
-	FVector WorldLocation, WorldDirection;
-	if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	FHitResult HitResult;
+	GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+
+	if (HitResult.bBlockingHit)
 	{
-		FVector Start = WorldLocation;
-		FVector End = Start + (WorldDirection * 10000.0f);
-
-		FHitResult HitResult;
-		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility);
-
 		//타일그리드로 전달.
 		//HitResult.GetActor()
 	}

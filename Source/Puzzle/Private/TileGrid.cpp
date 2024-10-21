@@ -4,6 +4,7 @@
 #include "TileGrid.h"
 
 #include "Tile.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATileGrid::ATileGrid()
@@ -11,6 +12,12 @@ ATileGrid::ATileGrid()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	TileClass = ATile::StaticClass();
+	SetMaterials();
+}
+
+void ATileGrid::SetMaterials()
+{
 	TArray<FString> MaterialPathStrings;
 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Red.Mat_Red'"));
 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Yellow.Mat_Yellow'"));
@@ -31,12 +38,11 @@ ATileGrid::ATileGrid()
 void ATileGrid::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-void ATileGrid::MakeGrid()
+void ATileGrid::DestroyAllTiles()
 {
-	//기존에 그려진 그리드가 있다면 삭제.
+	//그리드에 쓰인 타일 삭제.
 	if( TileGrid.Num() > 0 )
 	{
 		for( int i = 0; i < TileGrid.Num(); i++ )
@@ -46,13 +52,29 @@ void ATileGrid::MakeGrid()
 				for(int j = 0; j < TileGrid[i].Num(); j++)
 				{
 					TileGrid[i][j]->Destroy();
+					TileGrid[i][j].Reset();					
 				}
-
 				TileGrid[i].Empty();
 			}
 		}
 		TileGrid.Empty();
 	}
+
+	//Unused타일 삭제.
+	if(UnusedTiles.Num()>0)
+	{
+		for( int i = 0; i < UnusedTiles.Num(); i++ )
+		{	
+			UnusedTiles[i]->Destroy();
+		}
+
+		UnusedTiles.Empty();
+	}		
+}
+
+void ATileGrid::MakeGrid()
+{
+	DestroyAllTiles();
 
 	//새로운 그리드 생성.
 	TileGrid.SetNum(GridRow);
@@ -62,9 +84,26 @@ void ATileGrid::MakeGrid()
 		for(int j = 0; j < TileGrid[i].Num(); j++)
 		{
 			int typeIndex = FMath::RandRange(0, Materials.Num() - 1);
-			ATile* tile = GetWorld()->SpawnActor<ATile>(ATile::StaticClass(), FVector(0, j*100, i*100), FRotator::ZeroRotator);
-			tile->SetTile(typeIndex, Materials[typeIndex]);
-			TileGrid[i][j] = tile;
+			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, j*100, i*100), FRotator::ZeroRotator);
+			if(tile)
+			{
+				tile->SetTile(typeIndex, Materials[typeIndex]);
+				TileGrid[i][j] = tile;	
+			}			
 		}
 	}
+}
+
+void ATileGrid::InitializeTileGrid(int32 gridRow, int32 gridColumn)
+{
+	GridRow = gridRow;
+	GridColumn = gridColumn;
+	
+	DestroyAllTiles();
+	MakeGrid();
+}
+
+FVector ATileGrid::GetCameraPosition()
+{
+	return FVector(GridColumn, GridRow, 0);
 }
