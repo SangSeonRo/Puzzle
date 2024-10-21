@@ -16,7 +16,7 @@ class PUZZLE_API ATile : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ATile();
-	void SetTile(int8 typeIndex, UMaterialInterface* material);
+	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* StaticMesh;
@@ -24,10 +24,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* BoxComponent;
 
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile", meta = (AllowPrivateAccess = "true"))
 	int32 TypeIndex;
-	
-public:
-	bool isMatching(ATile* otherTile);
-	void Focusing(bool isFocus);
+	bool IsMatching(ATile* OtherTile) const;
+	void SetTile(int8 typeIndex, UMaterialInterface* material);
+	void Selected(bool isSelected);
+
+	void SetVisible(bool visible);
 };

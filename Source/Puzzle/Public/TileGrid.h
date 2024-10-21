@@ -38,12 +38,30 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Grid", meta = (AllowPrivateAccess = "true"))
 	TArray<UMaterialInterface*> Materials;
 
-	TArray<TArray<TWeakObjectPtr<ATile>>> TileGrid;
+	UPROPERTY(VisibleAnywhere, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+	TArray<TWeakObjectPtr<ATile>> TileGrid;
+
+	UPROPERTY(VisibleAnywhere, Category = "Grid", meta = (AllowPrivateAccess = "true"))
 	TArray<TObjectPtr<ATile>> UnusedTiles;
 
-	void DestroyAllTiles();
-	void MakeGrid();
+	UPROPERTY(VisibleAnywhere, Category = "Grid", meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<ATile>> MatchingTiles;
+	
+	void TileGridDestroyAll();
+	void MakeTileGrid();
+	void SearchMatchingTiles();
+	void ProcessMatchingTiles();
+	void MoveTiles();
+	void FillGrid();
+
 public:
 	void InitializeTileGrid(int32 gridRow, int32 gridColumn);
-	FVector GetCameraPosition();
+	int GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex);
+	int8 GetGridRowIndexFromTileIndex(int tileIndex);
+	int8 GetGridColumnFromTileIndex(int tileIndex);
+	int GetTileIndex(ATile* tile);
+	bool HasEmpty();
+	bool IsSwapAble(ATile* tile1, ATile* tile2);
+	void UndoSwapTile(ATile* tile1, ATile* tile2);
+	void SwapTile(ATile* tile1, ATile* tile2);
 };

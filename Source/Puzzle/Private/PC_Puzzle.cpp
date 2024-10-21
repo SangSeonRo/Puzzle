@@ -40,7 +40,6 @@ void APC_Puzzle::InputAction_Mouse_BT_Left(const FInputActionValue& value)
 
 	if (HitResult.bBlockingHit)
 	{
-		//타일그리드로 전달.
-		//HitResult.GetActor()
+		
 	}
 }

@@ -4,7 +4,7 @@
 #include "TileGrid.h"
 
 #include "Tile.h"
-#include "Kismet/GameplayStatics.h"
+#include "Components/SceneComponent.h"
 
 // Sets default values
 ATileGrid::ATileGrid()
@@ -14,6 +14,9 @@ ATileGrid::ATileGrid()
 
 	TileClass = ATile::StaticClass();
 	SetMaterials();
+
+    USceneComponent* RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
+	RootComponent = RootSceneComponent;
 }
 
 void ATileGrid::SetMaterials()
@@ -40,22 +43,23 @@ void ATileGrid::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ATileGrid::DestroyAllTiles()
+void ATileGrid::InitializeTileGrid(int32 gridRow, int32 gridColumn)
+{
+	GridRow = gridRow;
+	GridColumn = gridColumn;
+	
+	TileGridDestroyAll();
+	MakeTileGrid();
+}
+
+void ATileGrid::TileGridDestroyAll()
 {
 	//그리드에 쓰인 타일 삭제.
 	if( TileGrid.Num() > 0 )
 	{
-		for( int i = 0; i < TileGrid.Num(); i++ )
+		for(int i = 0; i < TileGrid.Num(); i++)
 		{
-			if( TileGrid[i].Num() > 0 )
-			{
-				for(int j = 0; j < TileGrid[i].Num(); j++)
-				{
-					TileGrid[i][j]->Destroy();
-					TileGrid[i][j].Reset();					
-				}
-				TileGrid[i].Empty();
-			}
+			TileGrid[i]->Destroy();					
 		}
 		TileGrid.Empty();
 	}
@@ -71,38 +75,263 @@ void ATileGrid::DestroyAllTiles()
 	}		
 }
 
-void ATileGrid::MakeGrid()
+void ATileGrid::MakeTileGrid()
 {
-	DestroyAllTiles();
+	//원점을 기준으로 중앙 정렬.
+	SetActorLocation(FVector(0,-(GridRow*TileWidth/2)+(TileWidth/2),-(GridColumn*TileHeight/2)+(TileHeight/2)));
 
 	//새로운 그리드 생성.
-	TileGrid.SetNum(GridRow);
-	for(int i = 0; i < TileGrid.Num(); i++)
+	TileGrid.SetNum(GridRow*GridColumn);
+	for(int index = 0; index < TileGrid.Num(); index++)
 	{
-		TileGrid[i].SetNum(GridColumn);
-		for(int j = 0; j < TileGrid[i].Num(); j++)
+		int typeIndex = FMath::RandRange(0, Materials.Num() - 1);
+		ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass);
+		if(tile)
 		{
-			int typeIndex = FMath::RandRange(0, Materials.Num() - 1);
-			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, j*TileWidth+(TileWidth/2.0f), i*TileHeight+(TileHeight/2.0f)), FRotator::ZeroRotator);
-			if(tile)
+			tile->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+			tile->SetActorRelativeLocation(FVector(0, GetGridColumnFromTileIndex(index)*TileWidth, GetGridRowIndexFromTileIndex(index)*TileHeight));
+			tile->SetTile(typeIndex, Materials[typeIndex]);
+			TileGrid[index] = tile;	
+		}			
+	}
+
+	do
+	{
+		while(HasEmpty())
+		{
+			MoveTiles();
+			FillGrid();
+		}
+		SearchMatchingTiles();
+		ProcessMatchingTiles();
+	}
+	while (HasEmpty());
+}
+
+void ATileGrid::SearchMatchingTiles()
+{
+	MatchingTiles.Empty();
+	
+	for(int index = 0; index < TileGrid.Num(); index++)
+	{
+		int8 gridRowIndex = GetGridRowIndexFromTileIndex(index);
+		int8 gridColumnIndex = GetGridColumnFromTileIndex(index);
+
+		if(gridRowIndex > GridRow - 3)
+			continue;
+
+		if(gridColumnIndex > GridColumn - 3)
+			continue;
+
+		//가로방향매칭타일 체크.
+		TArray<TObjectPtr<ATile>> horizontalMatchTiles;
+		int tempColumnIndex = gridColumnIndex;
+		while(true)
+		{
+			++tempColumnIndex;
+			if(tempColumnIndex >= GridColumn)
+				break;
+
+			int targetIndex = GetTileIndexFromGridIndex(gridRowIndex,tempColumnIndex);
+
+			if(TileGrid[targetIndex] == nullptr)
+				break;
+
+			if(TileGrid[index]->IsMatching(TileGrid[targetIndex].Get()))
+				horizontalMatchTiles.Add(TileGrid[targetIndex].Get());
+			else
+				break;
+		}
+		if(horizontalMatchTiles.Num()>=2)
+		{
+			if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
+				MatchingTiles.Add(TileGrid[index].Get());
+			for(int i = 0; i < horizontalMatchTiles.Num(); i++)
 			{
-				tile->SetTile(typeIndex, Materials[typeIndex]);
-				TileGrid[i][j] = tile;	
-			}			
+				if(MatchingTiles.Find(horizontalMatchTiles[i]) == INDEX_NONE)
+					MatchingTiles.Add(horizontalMatchTiles[i]);
+			}
+		}
+
+		//세로방향매칭타일체크
+		TArray<TObjectPtr<ATile>> verticalMatchTiles;
+		int tempRowIndex = gridRowIndex;
+		while(true)
+		{
+			++tempRowIndex;
+			if(tempRowIndex >= GridRow)
+				break;
+
+			int targetIndex = GetTileIndexFromGridIndex(tempRowIndex,gridColumnIndex);
+
+			if(TileGrid[targetIndex] == nullptr)
+				break;
+
+			if(TileGrid[index]->IsMatching(TileGrid[targetIndex].Get()))
+				verticalMatchTiles.Add(TileGrid[targetIndex].Get());
+			else
+				break;
+		}
+		if(verticalMatchTiles.Num()>=2)
+		{
+			if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
+				MatchingTiles.Add(TileGrid[index].Get());
+			for(int i = 0; i < verticalMatchTiles.Num(); i++)
+			{
+				if(MatchingTiles.Find(verticalMatchTiles[i]) == INDEX_NONE)
+					MatchingTiles.Add(verticalMatchTiles[i]);
+			}	
 		}
 	}
 }
 
-void ATileGrid::InitializeTileGrid(int32 gridRow, int32 gridColumn)
+void ATileGrid::ProcessMatchingTiles()
 {
-	GridRow = gridRow;
-	GridColumn = gridColumn;
-	
-	DestroyAllTiles();
-	MakeGrid();
+	for(TObjectPtr<ATile> tile : MatchingTiles)
+	{
+		int tileIndex = GetTileIndex(tile);
+		if(tileIndex != INDEX_NONE)
+		{
+			TileGrid[tileIndex] = nullptr;
+		}			
+		UnusedTiles.Push(tile);
+		tile->SetVisible(false);
+	}
+	MatchingTiles.Empty();
 }
 
-FVector ATileGrid::GetCameraPosition()
+void ATileGrid::MoveTiles()
 {
-	return FVector(GridColumn, GridRow, 0);
+	for(int row = 1; row < GridRow; row++)
+	{
+		for(int col = 0; col < GridColumn; col++)
+		{
+			int tileIndex = GetTileIndexFromGridIndex(row,col);
+			int targetIndex = GetTileIndexFromGridIndex(row-1,col);
+			if(TileGrid[tileIndex] != nullptr && TileGrid[targetIndex] == nullptr)
+			{
+				TileGrid[targetIndex] = TileGrid[tileIndex];
+				TileGrid[targetIndex]->SetActorLocation(FVector(0, col*TileWidth, (row-1)*TileHeight));				
+				TileGrid[tileIndex] = nullptr;
+			}
+		}
+	}
+}
+
+void ATileGrid::FillGrid()
+{
+	for(int index = GridRow * (GridColumn-1); index < GridRow * GridColumn; index++)
+	{
+		if(TileGrid[index] == nullptr)
+		{
+			int8 typeIndex = FMath::RandRange(0, Materials.Num()-1);
+			ATile* tile = UnusedTiles.Pop();
+			if(tile)
+			{
+				tile->SetActorRelativeLocation(FVector(0, GetGridColumnFromTileIndex(index)*TileWidth, GetGridRowIndexFromTileIndex(index)*TileHeight));
+				tile->SetTile(typeIndex, Materials[typeIndex]);
+				TileGrid[index] = tile;
+				tile->SetVisible(true);
+			}
+		}
+	}
+}
+
+int ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
+{
+	return rowIndex * GridColumn + columnIndex;
+}
+
+int8 ATileGrid::GetGridRowIndexFromTileIndex(int tileIndex)
+{
+	return tileIndex / GridColumn;
+}
+int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
+{
+	return tileIndex % GridColumn;
+}
+
+int ATileGrid::GetTileIndex(ATile* tile)
+{
+	return TileGrid.Find(tile);
+}
+
+bool ATileGrid::HasEmpty()
+{
+	return UnusedTiles.Num() > 0;
+}
+
+bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
+{
+	int tile1Index = GetTileIndex(tile1);
+	int tile2Index = GetTileIndex(tile2);
+	
+	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
+		return true;
+
+	return false;
+}
+
+void ATileGrid::UndoSwapTile(ATile* tile1, ATile* tile2)
+{
+	if(IsSwapAble(tile1, tile2))
+	{
+		FVector loc1 = tile1->GetActorLocation();
+		tile1->SetActorLocation(tile2->GetActorLocation());
+		tile2->SetActorLocation(loc1);
+
+		int tile1Index = GetTileIndex(tile1);
+		int tile2Index = GetTileIndex(tile2);
+		
+		TileGrid[tile1Index] = tile2;
+		TileGrid[tile2Index] = tile1;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
+	}	
+}
+
+void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
+{
+	if(IsSwapAble(tile1, tile2))
+	{
+		FVector loc1 = tile1->GetActorLocation();
+		tile1->SetActorLocation(tile2->GetActorLocation());
+		tile2->SetActorLocation(loc1);
+
+		int tile1Index = GetTileIndex(tile1);
+		int tile2Index = GetTileIndex(tile2);
+		
+		TileGrid[tile1Index] = tile2;
+		TileGrid[tile2Index] = tile1;
+
+		int processedTileCount = 0;
+		do
+		{
+			while(HasEmpty())
+			{
+				MoveTiles();
+				FillGrid();
+			}
+			SearchMatchingTiles();
+			ProcessMatchingTiles();
+			processedTileCount += UnusedTiles.Num();
+		}
+		while (HasEmpty());
+
+		if(processedTileCount == 0)
+		{
+			//Undo
+			
+		}
+		else
+		{
+			//점수반영
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile : These are non-continuous tiles."));
+	}	
 }

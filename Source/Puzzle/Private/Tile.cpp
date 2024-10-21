@@ -26,27 +26,27 @@ ATile::ATile()
 	}	
 }
 
+bool ATile::IsMatching(ATile* OtherTile) const
+{
+	if(OtherTile == nullptr)
+		return false;
+	
+	return TypeIndex ==  OtherTile->TypeIndex;
+}
+
 void ATile::SetTile(int8 typeIndex, UMaterialInterface* material)
 {
 	TypeIndex = typeIndex;
 	StaticMesh->SetMaterial(0, material);
 }
 
-bool ATile::isMatching(ATile* otherTile)
-{
-	if (otherTile == nullptr)
-		return false;
-	
-	return TypeIndex == otherTile->TypeIndex;
-}
-
-void ATile::Focusing(bool isFocus)
+void ATile::Selected(bool isSelected)
 {
 	if(StaticMesh == nullptr)
 		return;
 
 	//포커싱되면 스케일변경.
-	if(isFocus)
+	if(isSelected)
 	{
 		StaticMesh->SetRelativeScale3D(FVector(0.8f));
 	}
@@ -54,4 +54,12 @@ void ATile::Focusing(bool isFocus)
 	{
 		StaticMesh->SetRelativeScale3D(FVector(0.95f));
 	}
+}
+
+void ATile::SetVisible(bool visible)
+{
+	if(StaticMesh == nullptr)
+		return;
+
+	StaticMesh->SetVisibility(visible);
 }
