@@ -67,7 +67,6 @@ void ATileGrid::DestroyAllTiles()
 		{	
 			UnusedTiles[i]->Destroy();
 		}
-
 		UnusedTiles.Empty();
 	}		
 }
@@ -84,7 +83,7 @@ void ATileGrid::MakeGrid()
 		for(int j = 0; j < TileGrid[i].Num(); j++)
 		{
 			int typeIndex = FMath::RandRange(0, Materials.Num() - 1);
-			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, j*100, i*100), FRotator::ZeroRotator);
+			ATile* tile = GetWorld()->SpawnActor<ATile>(TileClass, FVector(0, j*TileWidth+(TileWidth/2.0f), i*TileHeight+(TileHeight/2.0f)), FRotator::ZeroRotator);
 			if(tile)
 			{
 				tile->SetTile(typeIndex, Materials[typeIndex]);

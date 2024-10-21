@@ -6,6 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "TileGrid.generated.h"
 
+constexpr float TileWidth = 100.0f;
+constexpr float TileHeight = 100.0f;
+
 class ATile;
 
 UCLASS()
