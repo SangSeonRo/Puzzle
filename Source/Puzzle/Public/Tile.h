@@ -30,6 +30,5 @@ public:
 	bool IsMatching(ATile* OtherTile) const;
 	void SetTile(int8 typeIndex, UMaterialInterface* material);
 	void Selected(bool isSelected);
-
 	void SetVisible(bool visible);
 };

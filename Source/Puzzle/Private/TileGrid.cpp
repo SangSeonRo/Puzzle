@@ -106,6 +106,265 @@ void ATileGrid::MakeTileGrid()
 		ProcessMatchingTiles();
 	}
 	while (HasEmpty());
+
+	if(IsMatchPossible() == false)
+	{
+		TileGridDestroyAll();
+		MakeTileGrid();
+	}
+		
+}
+
+bool ATileGrid::IsMatchPossible()
+{
+	// 매칭가능성 체크
+	for(int index = 0; index < TileGrid.Num(); index++)
+	{
+		int8 gridRowIndex = GetGridRowIndexFromTileIndex(index);
+		int8 gridColumnIndex = GetGridColumnFromTileIndex(index);
+
+		//TMap<TileType,Count>
+		TMap<int32,int32> tempIndexCount;
+		tempIndexCount.Empty();
+		//가로방향 체크
+		for(int i = 0; i < 3 ;i++)
+		{
+			int tileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i);
+			if(tileIndex != INDEX_NONE)
+			{
+				if (tempIndexCount.Contains(TileGrid[tileIndex].Get()->TypeIndex))
+				{
+					tempIndexCount[TileGrid[tileIndex].Get()->TypeIndex]++;
+				}
+				else
+				{
+					tempIndexCount.Add(TileGrid[tileIndex].Get()->TypeIndex, 1);
+				}
+			}
+		}
+	    //동일 타일이 2개 이상이면 가능성을체크함.
+		for (const auto& Elem : tempIndexCount)
+		{
+			if (Elem.Value > 1)
+			{
+				for(int i = 0; i < 3 ;i++)
+				{
+					int tileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i);
+					if(TileGrid[tileIndex].Get()->TypeIndex != Elem.Key)
+					{
+						switch(i)
+						{
+							case 0:
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i-1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}								
+								break;
+							case 1:
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}
+								break;
+							case 2:
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i+1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}
+								break;
+						}
+					}					
+				}
+				
+				if (Elem.Value >= 3)
+					return true;
+			}
+		}
+
+		tempIndexCount.Empty();
+		//세로방향 체크
+		for(int i = 0; i < 3 ;i++)
+		{
+			int tileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex);
+			if(tileIndex != INDEX_NONE)
+			{
+				if (tempIndexCount.Contains(TileGrid[tileIndex].Get()->TypeIndex))
+				{
+					tempIndexCount[TileGrid[tileIndex].Get()->TypeIndex]++;
+				}
+				else
+				{
+					tempIndexCount.Add(TileGrid[tileIndex].Get()->TypeIndex, 1);
+				}
+			}
+		}
+	    //동일 타일이 2개 이상이면 가능성을체크함.
+		for (const auto& Elem : tempIndexCount)
+		{
+			if (Elem.Value > 1)
+			{
+				for(int i = 0; i < 3 ;i++)
+				{
+					int tileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex);
+					if(TileGrid[tileIndex].Get()->TypeIndex != Elem.Key)
+					{
+						switch(i)
+						{
+							case 0: //좌우하
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex+1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}								
+								break;
+							case 1: //좌우
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-i, gridColumnIndex+1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}
+								break;
+							case 2: //좌우상
+								{
+									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex+1);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}
+
+									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i+1, gridColumnIndex);
+									if(tempTileIndex != INDEX_NONE)
+									{
+										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
+										{
+											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
+										}
+									}									
+								}
+								break;
+						}
+					}					
+				}
+				
+				if (Elem.Value >= 3)
+					return true;
+			}
+		}
+	}
+	
+	return false;
 }
 
 void ATileGrid::SearchMatchingTiles()
@@ -239,15 +498,28 @@ void ATileGrid::FillGrid()
 
 int ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
 {
+	if(rowIndex < 0 || rowIndex >= GridRow)
+		return INDEX_NONE;
+
+	if(columnIndex < 0 || columnIndex >= GridColumn)
+		return INDEX_NONE;
+	
 	return rowIndex * GridColumn + columnIndex;
 }
 
 int8 ATileGrid::GetGridRowIndexFromTileIndex(int tileIndex)
 {
+	if(tileIndex < 0 || tileIndex >= GridRow*GridColumn)
+		return INDEX_NONE;
+		
 	return tileIndex / GridColumn;
 }
+
 int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
 {
+	if(tileIndex < 0 || tileIndex >= GridRow*GridColumn)
+		return INDEX_NONE;
+	
 	return tileIndex % GridColumn;
 }
 
@@ -288,7 +560,7 @@ void ATileGrid::UndoSwapTile(ATile* tile1, ATile* tile2)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile"));
+		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile : These are non-continuous tiles."));
 	}	
 }
 
@@ -305,7 +577,7 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		
 		TileGrid[tile1Index] = tile2;
 		TileGrid[tile2Index] = tile1;
-
+		
 		int processedTileCount = 0;
 		do
 		{
@@ -323,12 +595,18 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		if(processedTileCount == 0)
 		{
 			//Undo
-			
+			UndoSwapTile(tile1, tile2);
 		}
 		else
 		{
 			//점수반영
-		}
+
+			//매칭되는 타일이 없으면 게임종료.
+			if(IsMatchPossible() == false)
+			{
+			
+			}
+		}		
 	}
 	else
 	{

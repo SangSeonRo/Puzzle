@@ -3,6 +3,9 @@
 
 #include "PC_Puzzle.h"
 
+#include "TileGrid.h"
+#include "Kismet/GameplayStatics.h"
+
 void APC_Puzzle::BeginPlay()
 {
 	Super::BeginPlay();
@@ -11,7 +14,13 @@ void APC_Puzzle::BeginPlay()
 	bShowMouseCursor = true;
 	FInputModeGameAndUI InputMode;
 	SetInputMode(InputMode);
+
+	auto findTileGrid =  UGameplayStatics::GetActorOfClass(GetWorld(), ATileGrid::StaticClass());
+	if(findTileGrid)
+		TileGrid = Cast<ATileGrid>(findTileGrid);
 }
+
+
 
 void APC_Puzzle::SetupInputComponent()
 {

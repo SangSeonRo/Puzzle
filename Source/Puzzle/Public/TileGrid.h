@@ -49,6 +49,7 @@ private:
 	
 	void TileGridDestroyAll();
 	void MakeTileGrid();
+	bool IsMatchPossible();
 	void SearchMatchingTiles();
 	void ProcessMatchingTiles();
 	void MoveTiles();
