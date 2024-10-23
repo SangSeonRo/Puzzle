@@ -12,37 +12,15 @@ ATileGrid::ATileGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
 	TileClass = ATile::StaticClass();
 	
     USceneComponent* RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 	RootComponent = RootSceneComponent;
 }
 
-// void ATileGrid::SetMaterials()
-// {
-// 	TArray<FString> MaterialPathStrings;
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Red.Mat_Red'"));
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Yellow.Mat_Yellow'"));
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Green.Mat_Green'"));
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Sky.Mat_Sky'"));
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Blue.Mat_Blue'"));
-// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Purple.Mat_Purple'"));
-//
-// 	for(FString MaterialPath : MaterialPathStrings)
-// 	{
-// 		ConstructorHelpers::FObjectFinder<UMaterialInterface> matFinder(*MaterialPath);
-// 		if (matFinder.Succeeded())
-// 			Materials.Add(matFinder.Object);
-// 	}
-// }
-
 void ATileGrid::SetMaterials(const TArray<UMaterialInterface*>& materials)
 {
-	for( UMaterialInterface* mat : materials)
-	{
-		Materials.Add(mat);
-	}
+	Materials = materials;
 }
 
 // Called when the game starts or when spawned
@@ -62,25 +40,19 @@ void ATileGrid::InitializeTileGrid(int32 gridRow, int32 gridColumn)
 
 void ATileGrid::TileGridDestroyAll()
 {
-	//그리드에 쓰인 타일 삭제.
-	if( TileGrid.Num() > 0 )
+	for(TWeakObjectPtr<ATile> tile : TileGrid)
 	{
-		for(int i = 0; i < TileGrid.Num(); i++)
-		{
-			TileGrid[i]->Destroy();					
-		}
-		TileGrid.Empty();
+		if(tile.IsValid())
+			tile->Destroy();
 	}
+	TileGrid.Empty();
 
-	//Unused타일 삭제.
-	if(UnusedTiles.Num()>0)
+	for(ATile* tile : UnusedTiles)
 	{
-		for( int i = 0; i < UnusedTiles.Num(); i++ )
-		{	
-			UnusedTiles[i]->Destroy();
-		}
-		UnusedTiles.Empty();
-	}		
+		if(tile)
+			tile->Destroy();
+	}
+	UnusedTiles.Empty();
 }
 
 void ATileGrid::MakeTileGrid()
