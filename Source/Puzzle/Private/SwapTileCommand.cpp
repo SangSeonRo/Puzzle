@@ -13,10 +13,10 @@ void USwapTileCommand::Initalize(ATileGrid* tileGrid, ATile* tile0, ATile* tile1
 
 void USwapTileCommand::Execute()
 {
-	TileGrid->SwapTile(Tile0, Tile1);
+	TileGrid->SwapProcess(Tile0, Tile1);
 }
 
 void USwapTileCommand::Undo()
 {
-	TileGrid->UndoSwapTile(Tile0, Tile1);
+	TileGrid->UndoSwapProcess(Tile0, Tile1);
 }

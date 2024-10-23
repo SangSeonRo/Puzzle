@@ -57,12 +57,12 @@ private:
 
 public:
 	void InitializeTileGrid(int32 gridRow, int32 gridColumn);
-	int GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex);
+	int32 GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex);
 	int8 GetGridRowIndexFromTileIndex(int tileIndex);
 	int8 GetGridColumnFromTileIndex(int tileIndex);
-	int GetTileIndex(ATile* tile);
+	int32 GetTileIndex(ATile* tile);
 	bool HasEmpty();
 	bool IsSwapAble(ATile* tile1, ATile* tile2);
-	void UndoSwapTile(ATile* tile1, ATile* tile2);
-	void SwapTile(ATile* tile1, ATile* tile2);
+	void UndoSwapProcess(ATile* tile1, ATile* tile2);
+	void SwapProcess(ATile* tile1, ATile* tile2);
 };

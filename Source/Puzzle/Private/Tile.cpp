@@ -58,8 +58,5 @@ void ATile::Selected(bool isSelected)
 
 void ATile::SetVisible(bool visible)
 {
-	if(StaticMesh == nullptr)
-		return;
-
 	StaticMesh->SetVisibility(visible);
 }

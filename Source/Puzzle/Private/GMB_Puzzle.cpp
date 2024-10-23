@@ -32,7 +32,7 @@ void AGMB_Puzzle::BeginPlay()
 		return;
 	}
 
-	TileGrid->InitializeTileGrid(6,6);
+	TileGrid->InitializeTileGrid(4,4);
 }
 
 void AGMB_Puzzle::SetupCamera()

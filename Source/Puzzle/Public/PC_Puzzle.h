@@ -18,18 +18,11 @@ class PUZZLE_API APC_Puzzle : public APlayerController
 	GENERATED_BODY()
 protected:
 	virtual void BeginPlay() override;
+	bool SetTileGrid();
 	virtual void SetupInputComponent() override;
 private:
 	void InputAction_Mouse_BT_Left(const FInputActionValue& value);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ATile> SelectedTile0;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<ATile> SelectedTile1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile", meta = (AllowPrivateAccess = "true"))
-	ATileGrid* TileGrid;
+	
 public:
 	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMappingContext;
@@ -37,5 +30,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "EnhancedInput")
 	UInputAction* IA_Mouse_BT_Left;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile")
+	TWeakObjectPtr<ATile> SelectedTile0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile")
+	TWeakObjectPtr<ATile> SelectedTile1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SelectedTile")
+	ATileGrid* TileGrid;	
 };

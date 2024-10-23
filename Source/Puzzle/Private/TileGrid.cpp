@@ -5,6 +5,7 @@
 
 #include "Tile.h"
 #include "Components/SceneComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ATileGrid::ATileGrid()
@@ -111,8 +112,7 @@ void ATileGrid::MakeTileGrid()
 	{
 		TileGridDestroyAll();
 		MakeTileGrid();
-	}
-		
+	}		
 }
 
 bool ATileGrid::IsMatchPossible()
@@ -120,250 +120,50 @@ bool ATileGrid::IsMatchPossible()
 	// 매칭가능성 체크
 	for(int index = 0; index < TileGrid.Num(); index++)
 	{
-		int8 gridRowIndex = GetGridRowIndexFromTileIndex(index);
-		int8 gridColumnIndex = GetGridColumnFromTileIndex(index);
+		TMap<int32,int32> matchCount;
+		matchCount.Empty();
 
-		//TMap<TileType,Count>
-		TMap<int32,int32> tempIndexCount;
-		tempIndexCount.Empty();
-		//가로방향 체크
-		for(int i = 0; i < 3 ;i++)
+		TArray<TPair<int32, int32>> adjustIndexes = {
+			TPair<int32, int32>(index - 1, index - 2),
+			TPair<int32, int32>(index + 1, index + 2),
+			TPair<int32, int32>(index+GridColumn, index+GridColumn*2),
+			TPair<int32, int32>(index-GridColumn, index-GridColumn*2)
+		};
+		
+		for (const TPair<int32, int32>& Pair : adjustIndexes)
 		{
-			int tileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i);
-			if(tileIndex != INDEX_NONE)
+			if(TileGrid.IsValidIndex(Pair.Key))
 			{
-				if (tempIndexCount.Contains(TileGrid[tileIndex].Get()->TypeIndex))
-				{
-					tempIndexCount[TileGrid[tileIndex].Get()->TypeIndex]++;
-				}
+				if(matchCount.Contains(TileGrid[Pair.Key]->TypeIndex))
+					matchCount[TileGrid[Pair.Key]->TypeIndex]++;
 				else
 				{
-					tempIndexCount.Add(TileGrid[tileIndex].Get()->TypeIndex, 1);
+					matchCount.Add(TileGrid[Pair.Key]->TypeIndex, 1);
 				}
-			}
-		}
-	    //동일 타일이 2개 이상이면 가능성을체크함.
-		for (const auto& Elem : tempIndexCount)
-		{
-			if (Elem.Value > 1)
-			{
-				for(int i = 0; i < 3 ;i++)
+
+				if(TileGrid.IsValidIndex(Pair.Value))
 				{
-					int tileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i);
-					if(TileGrid[tileIndex].Get()->TypeIndex != Elem.Key)
+					if(TileGrid[Pair.Value]->TypeIndex == TileGrid[Pair.Key]->TypeIndex)
 					{
-						switch(i)
+						if(matchCount.Contains(TileGrid[Pair.Value]->TypeIndex))
+							matchCount[TileGrid[Pair.Value]->TypeIndex]++;
+						else
 						{
-							case 0:
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i-1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}								
-								break;
-							case 1:
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}
-								break;
-							case 2:
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex, gridColumnIndex+i+1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex+i);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}
-								break;
+							matchCount.Add(TileGrid[Pair.Value]->TypeIndex, 1);
 						}
-					}					
+					}
 				}
-				
-				if (Elem.Value >= 3)
-					return true;
 			}
 		}
 
-		tempIndexCount.Empty();
-		//세로방향 체크
-		for(int i = 0; i < 3 ;i++)
+		for (const auto& element : matchCount)
 		{
-			int tileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex);
-			if(tileIndex != INDEX_NONE)
+			if (element.Value >= 3)
 			{
-				if (tempIndexCount.Contains(TileGrid[tileIndex].Get()->TypeIndex))
-				{
-					tempIndexCount[TileGrid[tileIndex].Get()->TypeIndex]++;
-				}
-				else
-				{
-					tempIndexCount.Add(TileGrid[tileIndex].Get()->TypeIndex, 1);
-				}
+				return true;
 			}
-		}
-	    //동일 타일이 2개 이상이면 가능성을체크함.
-		for (const auto& Elem : tempIndexCount)
-		{
-			if (Elem.Value > 1)
-			{
-				for(int i = 0; i < 3 ;i++)
-				{
-					int tileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex);
-					if(TileGrid[tileIndex].Get()->TypeIndex != Elem.Key)
-					{
-						switch(i)
-						{
-							case 0: //좌우하
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex+1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-1, gridColumnIndex);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}								
-								break;
-							case 1: //좌우
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex-i, gridColumnIndex+1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}
-								break;
-							case 2: //좌우상
-								{
-									int tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex-1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i, gridColumnIndex+1);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}
-
-									tempTileIndex = GetTileIndexFromGridIndex(gridRowIndex+i+1, gridColumnIndex);
-									if(tempTileIndex != INDEX_NONE)
-									{
-										if (tempIndexCount.Contains(TileGrid[tempTileIndex].Get()->TypeIndex))
-										{
-											tempIndexCount[TileGrid[tempTileIndex].Get()->TypeIndex]++;
-										}
-									}									
-								}
-								break;
-						}
-					}					
-				}
-				
-				if (Elem.Value >= 3)
-					return true;
-			}
-		}
+		}		
 	}
-	
 	return false;
 }
 
@@ -373,73 +173,32 @@ void ATileGrid::SearchMatchingTiles()
 	
 	for(int index = 0; index < TileGrid.Num(); index++)
 	{
-		int8 gridRowIndex = GetGridRowIndexFromTileIndex(index);
-		int8 gridColumnIndex = GetGridColumnFromTileIndex(index);
-
-		if(gridRowIndex > GridRow - 3)
-			continue;
-
-		if(gridColumnIndex > GridColumn - 3)
-			continue;
-
-		//가로방향매칭타일 체크.
-		TArray<TObjectPtr<ATile>> horizontalMatchTiles;
-		int tempColumnIndex = gridColumnIndex;
-		while(true)
+		//가로방향체크
+		if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+1) && TileGrid.IsValidIndex(index+2))
 		{
-			++tempColumnIndex;
-			if(tempColumnIndex >= GridColumn)
-				break;
-
-			int targetIndex = GetTileIndexFromGridIndex(gridRowIndex,tempColumnIndex);
-
-			if(TileGrid[targetIndex] == nullptr)
-				break;
-
-			if(TileGrid[index]->IsMatching(TileGrid[targetIndex].Get()))
-				horizontalMatchTiles.Add(TileGrid[targetIndex].Get());
-			else
-				break;
-		}
-		if(horizontalMatchTiles.Num()>=2)
-		{
-			if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
-				MatchingTiles.Add(TileGrid[index].Get());
-			for(int i = 0; i < horizontalMatchTiles.Num(); i++)
+			if(TileGrid[index]->IsMatching(TileGrid[index+1].Get()) && TileGrid[index]->IsMatching(TileGrid[index+2].Get()))
 			{
-				if(MatchingTiles.Find(horizontalMatchTiles[i]) == INDEX_NONE)
-					MatchingTiles.Add(horizontalMatchTiles[i]);
+				if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index].Get());
+				if(MatchingTiles.Find(TileGrid[index+1].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index+1].Get());
+				if(MatchingTiles.Find(TileGrid[index+2].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index+2].Get());
 			}
 		}
 
-		//세로방향매칭타일체크
-		TArray<TObjectPtr<ATile>> verticalMatchTiles;
-		int tempRowIndex = gridRowIndex;
-		while(true)
+		//세로방향체크
+		if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+GridColumn) && TileGrid.IsValidIndex(index+GridColumn*2))
 		{
-			++tempRowIndex;
-			if(tempRowIndex >= GridRow)
-				break;
-
-			int targetIndex = GetTileIndexFromGridIndex(tempRowIndex,gridColumnIndex);
-
-			if(TileGrid[targetIndex] == nullptr)
-				break;
-
-			if(TileGrid[index]->IsMatching(TileGrid[targetIndex].Get()))
-				verticalMatchTiles.Add(TileGrid[targetIndex].Get());
-			else
-				break;
-		}
-		if(verticalMatchTiles.Num()>=2)
-		{
-			if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
-				MatchingTiles.Add(TileGrid[index].Get());
-			for(int i = 0; i < verticalMatchTiles.Num(); i++)
+			if(TileGrid[index]->IsMatching(TileGrid[index+GridColumn].Get()) && TileGrid[index]->IsMatching(TileGrid[index+GridColumn*2].Get()))
 			{
-				if(MatchingTiles.Find(verticalMatchTiles[i]) == INDEX_NONE)
-					MatchingTiles.Add(verticalMatchTiles[i]);
-			}	
+				if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index].Get());
+				if(MatchingTiles.Find(TileGrid[index+GridColumn].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index+GridColumn].Get());
+				if(MatchingTiles.Find(TileGrid[index+GridColumn*2].Get()) == INDEX_NONE)
+					MatchingTiles.Add(TileGrid[index+GridColumn*2].Get());
+			}
 		}
 	}
 }
@@ -448,7 +207,7 @@ void ATileGrid::ProcessMatchingTiles()
 {
 	for(TObjectPtr<ATile> tile : MatchingTiles)
 	{
-		int tileIndex = GetTileIndex(tile);
+		int32 tileIndex = GetTileIndex(tile);
 		if(tileIndex != INDEX_NONE)
 		{
 			TileGrid[tileIndex] = nullptr;
@@ -470,7 +229,7 @@ void ATileGrid::MoveTiles()
 			if(TileGrid[tileIndex] != nullptr && TileGrid[targetIndex] == nullptr)
 			{
 				TileGrid[targetIndex] = TileGrid[tileIndex];
-				TileGrid[targetIndex]->SetActorLocation(FVector(0, col*TileWidth, (row-1)*TileHeight));				
+				TileGrid[targetIndex]->SetActorRelativeLocation(FVector(0, col*TileWidth, (row-1)*TileHeight));				
 				TileGrid[tileIndex] = nullptr;
 			}
 		}
@@ -479,7 +238,7 @@ void ATileGrid::MoveTiles()
 
 void ATileGrid::FillGrid()
 {
-	for(int index = GridRow * (GridColumn-1); index < GridRow * GridColumn; index++)
+	for(int index = (GridRow-1) * GridColumn; index < GridRow * GridColumn; index++)
 	{
 		if(TileGrid[index] == nullptr)
 		{
@@ -496,7 +255,7 @@ void ATileGrid::FillGrid()
 	}
 }
 
-int ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
+int32 ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
 {
 	if(rowIndex < 0 || rowIndex >= GridRow)
 		return INDEX_NONE;
@@ -523,7 +282,7 @@ int8 ATileGrid::GetGridColumnFromTileIndex(int tileIndex)
 	return tileIndex % GridColumn;
 }
 
-int ATileGrid::GetTileIndex(ATile* tile)
+int32 ATileGrid::GetTileIndex(ATile* tile)
 {
 	return TileGrid.Find(tile);
 }
@@ -535,8 +294,11 @@ bool ATileGrid::HasEmpty()
 
 bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
 {
-	int tile1Index = GetTileIndex(tile1);
-	int tile2Index = GetTileIndex(tile2);
+	int32 tile1Index = GetTileIndex(tile1);
+	int32 tile2Index = GetTileIndex(tile2);
+
+	if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
+		return false;
 	
 	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
 		return true;
@@ -544,19 +306,25 @@ bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
 	return false;
 }
 
-void ATileGrid::UndoSwapTile(ATile* tile1, ATile* tile2)
+void ATileGrid::UndoSwapProcess(ATile* tile1, ATile* tile2)
 {
+	UE_LOG(LogTemp, Display, TEXT("ATileGrid::UndoSwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
 	if(IsSwapAble(tile1, tile2))
 	{
+		int32 tile1Index = GetTileIndex(tile1);
+		int32 tile2Index = GetTileIndex(tile2);
+
+		if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UndoSwapProcess TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
+			return;
+		}
+		TileGrid[tile1Index] = tile2;
+		TileGrid[tile2Index] = tile1;
+
 		FVector loc1 = tile1->GetActorLocation();
 		tile1->SetActorLocation(tile2->GetActorLocation());
 		tile2->SetActorLocation(loc1);
-
-		int tile1Index = GetTileIndex(tile1);
-		int tile2Index = GetTileIndex(tile2);
-		
-		TileGrid[tile1Index] = tile2;
-		TileGrid[tile2Index] = tile1;
 	}
 	else
 	{
@@ -564,19 +332,26 @@ void ATileGrid::UndoSwapTile(ATile* tile1, ATile* tile2)
 	}	
 }
 
-void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
+void ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 {
+	UE_LOG(LogTemp, Display, TEXT("ATileGrid::SwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
 	if(IsSwapAble(tile1, tile2))
 	{
+		int32 tile1Index = GetTileIndex(tile1);
+		int32 tile2Index = GetTileIndex(tile2);
+
+		if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("UndoSwapProcess TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
+			return;
+		}
+
+		TileGrid[tile1Index] = tile2;
+		TileGrid[tile2Index] = tile1;
+		
 		FVector loc1 = tile1->GetActorLocation();
 		tile1->SetActorLocation(tile2->GetActorLocation());
 		tile2->SetActorLocation(loc1);
-
-		int tile1Index = GetTileIndex(tile1);
-		int tile2Index = GetTileIndex(tile2);
-		
-		TileGrid[tile1Index] = tile2;
-		TileGrid[tile2Index] = tile1;
 		
 		int processedTileCount = 0;
 		do
@@ -585,6 +360,7 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 			{
 				MoveTiles();
 				FillGrid();
+				
 			}
 			SearchMatchingTiles();
 			ProcessMatchingTiles();
@@ -592,21 +368,22 @@ void ATileGrid::SwapTile(ATile* tile1, ATile* tile2)
 		}
 		while (HasEmpty());
 
+		
 		if(processedTileCount == 0)
 		{
 			//Undo
-			UndoSwapTile(tile1, tile2);
+			UndoSwapProcess(tile1, tile2);
 		}
 		else
 		{
 			//점수반영
+		}
 
-			//매칭되는 타일이 없으면 게임종료.
-			if(IsMatchPossible() == false)
-			{
-			
-			}
-		}		
+		if(IsMatchPossible() == false)
+		{
+			UE_LOG(LogTemp, Display, TEXT("GAME OVER : matching Impossible!"));
+		}
+
 	}
 	else
 	{
