@@ -12,6 +12,12 @@
 #include "Engine/DirectionalLight.h"
 #include "Kismet/GameplayStatics.h"
 
+AGMB_Puzzle::AGMB_Puzzle()
+{
+	GridRow = 6;
+	GridColumn = 6;
+}
+
 void AGMB_Puzzle::BeginPlay()
 {
 	Super::BeginPlay();
@@ -39,8 +45,8 @@ void AGMB_Puzzle::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("GI_Puzzle Not Found."));
 		return;
 	}
-	
-	TileGrid->InitializeTileGrid(4,4);
+	TileGrid->SetMaterials(Materials);
+	TileGrid->InitializeTileGrid(GridRow,GridColumn);
 }
 
 void AGMB_Puzzle::SetupCamera()

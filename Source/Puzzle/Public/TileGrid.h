@@ -19,8 +19,6 @@ class PUZZLE_API ATileGrid : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ATileGrid();
-	void SetMaterials();
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -56,6 +54,7 @@ private:
 	void FillGrid();
 
 public:
+	void SetMaterials(const TArray<UMaterialInterface*>& materials);
 	void InitializeTileGrid(int32 gridRow, int32 gridColumn);
 	int32 GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex);
 	int8 GetGridRowIndexFromTileIndex(int tileIndex);

@@ -14,27 +14,34 @@ ATileGrid::ATileGrid()
 	PrimaryActorTick.bCanEverTick = false;
 
 	TileClass = ATile::StaticClass();
-	SetMaterials();
-
+	
     USceneComponent* RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 	RootComponent = RootSceneComponent;
 }
 
-void ATileGrid::SetMaterials()
-{
-	TArray<FString> MaterialPathStrings;
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Red.Mat_Red'"));
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Yellow.Mat_Yellow'"));
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Green.Mat_Green'"));
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Sky.Mat_Sky'"));
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Blue.Mat_Blue'"));
-	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Purple.Mat_Purple'"));
+// void ATileGrid::SetMaterials()
+// {
+// 	TArray<FString> MaterialPathStrings;
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Red.Mat_Red'"));
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Yellow.Mat_Yellow'"));
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Green.Mat_Green'"));
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Sky.Mat_Sky'"));
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Blue.Mat_Blue'"));
+// 	MaterialPathStrings.Add(TEXT("/Script/Engine.Material'/Game/Material/Mat_Purple.Mat_Purple'"));
+//
+// 	for(FString MaterialPath : MaterialPathStrings)
+// 	{
+// 		ConstructorHelpers::FObjectFinder<UMaterialInterface> matFinder(*MaterialPath);
+// 		if (matFinder.Succeeded())
+// 			Materials.Add(matFinder.Object);
+// 	}
+// }
 
-	for(FString MaterialPath : MaterialPathStrings)
+void ATileGrid::SetMaterials(const TArray<UMaterialInterface*>& materials)
+{
+	for( UMaterialInterface* mat : materials)
 	{
-		ConstructorHelpers::FObjectFinder<UMaterialInterface> matFinder(*MaterialPath);
-		if (matFinder.Succeeded())
-			Materials.Add(matFinder.Object);
+		Materials.Add(mat);
 	}
 }
 
@@ -78,6 +85,12 @@ void ATileGrid::TileGridDestroyAll()
 
 void ATileGrid::MakeTileGrid()
 {
+	if(Materials.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("ATileGrid::MakeTileGrid: Materials is empty"));
+		return;
+	}
+	
 	//원점을 기준으로 중앙 정렬.
 	SetActorLocation(FVector(0,-(GridRow*TileWidth/2)+(TileWidth/2),-(GridColumn*TileHeight/2)+(TileHeight/2)));
 

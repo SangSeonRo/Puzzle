@@ -19,7 +19,8 @@ UCLASS()
 class PUZZLE_API AGMB_Puzzle : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+	AGMB_Puzzle();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetupCamera();
@@ -40,4 +41,13 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	UGI_Puzzle* GI_Puzzle;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Setting")
+	TArray<UMaterialInterface*> Materials;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Setting")
+	int32 GridRow;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Setting")
+	int32 GridColumn;
 };
