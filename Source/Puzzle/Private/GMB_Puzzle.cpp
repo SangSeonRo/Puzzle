@@ -3,6 +3,7 @@
 
 #include "GMB_Puzzle.h"
 
+#include "GI_Puzzle.h"
 #include "PC_Puzzle.h"
 #include "TileGrid.h"
 #include "Camera/CameraActor.h"
@@ -32,6 +33,13 @@ void AGMB_Puzzle::BeginPlay()
 		return;
 	}
 
+	GI_Puzzle = Cast<UGI_Puzzle>(GetGameInstance());
+	if(GI_Puzzle == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GI_Puzzle Not Found."));
+		return;
+	}
+	
 	TileGrid->InitializeTileGrid(4,4);
 }
 
