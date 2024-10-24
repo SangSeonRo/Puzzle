@@ -5,7 +5,6 @@
 
 #include "Tile.h"
 #include "Components/SceneComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ATileGrid::ATileGrid()
@@ -77,29 +76,32 @@ void ATileGrid::MakeTileGrid()
 		if(tile)
 		{
 			tile->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-			tile->SetActorRelativeLocation(FVector(0, GetGridColumnFromTileIndex(index)*TileWidth, GetGridRowIndexFromTileIndex(index)*TileHeight));
+			tile->SetActorRelativeLocation(GetRelativeLocationFromTileIndex(index));
 			tile->SetTile(typeIndex, Materials[typeIndex]);
 			TileGrid[index] = tile;	
 		}			
 	}
+	SearchMatchingTiles();
+	ProcessMatchingTiles();
+	FillGrid();
+	
+	// do
+	// {
+	// 	while(HasEmpty())
+	// 	{
+	// 		MoveTiles();
+	// 		FillGrid();
+	// 	}
+	// 	SearchMatchingTiles();
+	// 	ProcessMatchingTiles();
+	// }
+	// while (HasEmpty());
 
-	do
-	{
-		while(HasEmpty())
-		{
-			MoveTiles();
-			FillGrid();
-		}
-		SearchMatchingTiles();
-		ProcessMatchingTiles();
-	}
-	while (HasEmpty());
-
-	if(IsMatchPossible() == false)
-	{
-		TileGridDestroyAll();
-		MakeTileGrid();
-	}		
+	// if(IsMatchPossible() == false)
+	// {
+	// 	TileGridDestroyAll();
+	// 	MakeTileGrid();
+	// }		
 }
 
 bool ATileGrid::IsMatchPossible()
@@ -147,27 +149,33 @@ void ATileGrid::SearchMatchingTiles()
 	
 	for(int index = 0; index < TileGrid.Num(); index++)
 	{
-		//가로방향체크
-		if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+1) && TileGrid.IsValidIndex(index+2))
+		if(GetGridColumnFromTileIndex(index) <= GridColumn - 3 )
 		{
-			if(TileGrid[index]->IsMatching(TileGrid[index+1].Get()) && TileGrid[index]->IsMatching(TileGrid[index+2].Get()))
+			//가로방향체크
+			if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+1) && TileGrid.IsValidIndex(index+2))
 			{
-				MatchingTiles.AddUnique(TileGrid[index].Get());
-				MatchingTiles.AddUnique(TileGrid[index+1].Get());
-				MatchingTiles.AddUnique(TileGrid[index+2].Get());
-			}
-		}
+				if(TileGrid[index]->IsMatching(TileGrid[index+1].Get()) && TileGrid[index]->IsMatching(TileGrid[index+2].Get()))
+				{
+					MatchingTiles.AddUnique(TileGrid[index].Get());
+					MatchingTiles.AddUnique(TileGrid[index+1].Get());
+					MatchingTiles.AddUnique(TileGrid[index+2].Get());
+				}
+			}	
+		}		
 
-		//세로방향체크
-		if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+GridColumn) && TileGrid.IsValidIndex(index+GridColumn*2))
+		if(GetGridRowIndexFromTileIndex(index) <= GridRow - 3 )
 		{
-			if(TileGrid[index]->IsMatching(TileGrid[index+GridColumn].Get()) && TileGrid[index]->IsMatching(TileGrid[index+GridColumn*2].Get()))
+			//세로방향체크
+			if(TileGrid.IsValidIndex(index) && TileGrid.IsValidIndex(index+GridColumn) && TileGrid.IsValidIndex(index+GridColumn*2))
 			{
-				MatchingTiles.AddUnique(TileGrid[index].Get());
-				MatchingTiles.AddUnique(TileGrid[index+GridColumn].Get());
-				MatchingTiles.AddUnique(TileGrid[index+GridColumn*2].Get());
-			}
-		}
+				if(TileGrid[index]->IsMatching(TileGrid[index+GridColumn].Get()) && TileGrid[index]->IsMatching(TileGrid[index+GridColumn*2].Get()))
+				{
+					MatchingTiles.AddUnique(TileGrid[index].Get());
+					MatchingTiles.AddUnique(TileGrid[index+GridColumn].Get());
+					MatchingTiles.AddUnique(TileGrid[index+GridColumn*2].Get());
+				}
+			}	
+		}		
 	}
 }
 
@@ -176,14 +184,37 @@ void ATileGrid::ProcessMatchingTiles()
 	for(TObjectPtr<ATile> tile : MatchingTiles)
 	{
 		int32 tileIndex = GetTileIndex(tile);
+		UE_LOG(LogTemp, Display, TEXT("ProcessMatchingTileIndex : %d"),tileIndex);
 		if(tileIndex != INDEX_NONE)
 		{
 			TileGrid[tileIndex] = nullptr;
+			tile->SetVisible(false);
 		}			
 		UnusedTiles.Push(tile);
-		tile->SetVisible(false);
 	}
 	MatchingTiles.Empty();
+}
+
+void ATileGrid::FillGrid()
+{
+	for(int index = (GridRow-1) * GridColumn; index < GridRow * GridColumn; index++)
+	{
+		if(TileGrid[index] == nullptr)
+		{
+			int8 typeIndex = FMath::RandRange(0, Materials.Num()-1);
+			ATile* tile = UnusedTiles.Pop();
+			if(tile)
+			{
+				UE_LOG(LogTemp, Display, TEXT("Fill TileIndex : %d"),index);
+				
+				tile->SetTile(typeIndex, Materials[typeIndex]);
+				TileGrid[index] = tile;
+				tile->SetVisible(true);
+				tile->SetActorRelativeLocation(GetRelativeLocationFromGridIndexes(GridRow, GetGridColumnFromTileIndex(index)));
+				tile->MoveTile(GetRelativeLocationFromTileIndex(index), 10000);
+			}
+		}
+	}
 }
 
 void ATileGrid::MoveTiles()
@@ -197,27 +228,8 @@ void ATileGrid::MoveTiles()
 			if(TileGrid[tileIndex] != nullptr && TileGrid[targetIndex] == nullptr)
 			{
 				TileGrid[targetIndex] = TileGrid[tileIndex];
-				TileGrid[targetIndex]->SetActorRelativeLocation(FVector(0, col*TileWidth, (row-1)*TileHeight));				
+				TileGrid[targetIndex]->SetActorRelativeLocation(GetRelativeLocationFromGridIndexes((row-1),col));
 				TileGrid[tileIndex] = nullptr;
-			}
-		}
-	}
-}
-
-void ATileGrid::FillGrid()
-{
-	for(int index = (GridRow-1) * GridColumn; index < GridRow * GridColumn; index++)
-	{
-		if(TileGrid[index] == nullptr)
-		{
-			int8 typeIndex = FMath::RandRange(0, Materials.Num()-1);
-			ATile* tile = UnusedTiles.Pop();
-			if(tile)
-			{
-				tile->SetActorRelativeLocation(FVector(0, GetGridColumnFromTileIndex(index)*TileWidth, GetGridRowIndexFromTileIndex(index)*TileHeight));
-				tile->SetTile(typeIndex, Materials[typeIndex]);
-				TileGrid[index] = tile;
-				tile->SetVisible(true);
 			}
 		}
 	}
@@ -281,7 +293,7 @@ void ATileGrid::SwapTiles(ATile* tile1, ATile* tile2)
 
 	if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SwapP TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
+		UE_LOG(LogTemp, Warning, TEXT("Swap TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
 		return;
 	}
 	TileGrid[tile1Index] = tile2;
@@ -299,7 +311,7 @@ void ATileGrid::UndoSwapProcess(ATile* tile1, ATile* tile2)
 	SwapTiles(tile1, tile2);
 }
 
-bool ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
+void ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 {
 	UE_LOG(LogTemp, Display, TEXT("ATileGrid::SwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
 	
@@ -318,11 +330,24 @@ bool ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 		processedTileCount += UnusedTiles.Num();
 	}
 	while (HasEmpty());
+
+	if(processedTileCount == 0)
+	{
+		UndoSwapProcess(tile1, tile2);
+	}
 		
 	if(IsMatchPossible() == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("GAME OVER : matching Impossible!"));
 	}
+}
 
-	return processedTileCount > 0;
+FVector ATileGrid::GetRelativeLocationFromGridIndexes(int32 rowIndex, int32 columnIndex)
+{
+	return FVector(0, columnIndex*TileWidth, rowIndex*TileHeight);
+}
+
+FVector ATileGrid::GetRelativeLocationFromTileIndex(int32 tileIndex)
+{
+	return FVector(0, GetGridColumnFromTileIndex(tileIndex)*TileWidth, GetGridRowIndexFromTileIndex(tileIndex)*TileHeight);
 }

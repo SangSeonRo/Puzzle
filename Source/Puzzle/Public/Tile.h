@@ -12,6 +12,8 @@ UCLASS()
 class PUZZLE_API ATile : public AActor
 {
 	GENERATED_BODY()
+
+	virtual void Tick(float DeltaSeconds) override;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -31,4 +33,6 @@ public:
 	void SetTile(int8 typeIndex, UMaterialInterface* material);
 	void Selected(bool isSelected);
 	void SetVisible(bool visible);
+	void MoveTile(FVector TargetLocation, float Duration);
+	bool IsMoving = false;	
 };

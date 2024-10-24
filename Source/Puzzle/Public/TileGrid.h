@@ -64,5 +64,7 @@ public:
 	bool IsAdjustTiles(ATile* tile1, ATile* tile2);
 	void SwapTiles(ATile* tile1, ATile* tile2);
 	void UndoSwapProcess(ATile* tile1, ATile* tile2);
-	bool SwapProcess(ATile* tile1, ATile* tile2);
+	void SwapProcess(ATile* tile1, ATile* tile2);
+	FVector GetRelativeLocationFromGridIndexes(int32 rowIndex, int32 columnIndex);
+	FVector GetRelativeLocationFromTileIndex(int32 tileIndex);
 };
