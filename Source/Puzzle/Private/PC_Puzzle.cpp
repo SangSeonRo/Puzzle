@@ -29,7 +29,6 @@ bool APC_Puzzle::SetTileGrid()
 		if(TileGrid)
 			return true;
 	}
-
 	return false;
 }
 

@@ -64,5 +64,5 @@ public:
 	bool IsAdjustTiles(ATile* tile1, ATile* tile2);
 	void SwapTiles(ATile* tile1, ATile* tile2);
 	void UndoSwapProcess(ATile* tile1, ATile* tile2);
-	void SwapProcess(ATile* tile1, ATile* tile2);
+	bool SwapProcess(ATile* tile1, ATile* tile2);
 };

@@ -299,7 +299,7 @@ void ATileGrid::UndoSwapProcess(ATile* tile1, ATile* tile2)
 	SwapTiles(tile1, tile2);
 }
 
-void ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
+bool ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 {
 	UE_LOG(LogTemp, Display, TEXT("ATileGrid::SwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
 	
@@ -318,19 +318,11 @@ void ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 		processedTileCount += UnusedTiles.Num();
 	}
 	while (HasEmpty());
-	
-	if(processedTileCount == 0)
-	{
-		//Undo
-		UndoSwapProcess(tile1, tile2);
-	}
-	else
-	{
-		//점수반영
-	}
-
+		
 	if(IsMatchPossible() == false)
 	{
 		UE_LOG(LogTemp, Display, TEXT("GAME OVER : matching Impossible!"));
 	}
+
+	return processedTileCount > 0;
 }
