@@ -61,7 +61,8 @@ public:
 	int8 GetGridColumnFromTileIndex(int tileIndex);
 	int32 GetTileIndex(ATile* tile);
 	bool HasEmpty();
-	bool IsSwapAble(ATile* tile1, ATile* tile2);
+	bool IsAdjustTiles(ATile* tile1, ATile* tile2);
+	void SwapTiles(ATile* tile1, ATile* tile2);
 	void UndoSwapProcess(ATile* tile1, ATile* tile2);
 	void SwapProcess(ATile* tile1, ATile* tile2);
 };

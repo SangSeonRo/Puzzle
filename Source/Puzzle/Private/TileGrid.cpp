@@ -33,6 +33,8 @@ void ATileGrid::InitializeTileGrid(int32 gridRow, int32 gridColumn)
 {
 	GridRow = gridRow;
 	GridColumn = gridColumn;
+
+	TileGrid.Reserve(GridRow * GridColumn);
 	
 	TileGridDestroyAll();
 	MakeTileGrid();
@@ -105,8 +107,8 @@ bool ATileGrid::IsMatchPossible()
 	// 매칭가능성 체크
 	for(int index = 0; index < TileGrid.Num(); index++)
 	{
-		TMap<int32,int32> matchCount;
-		matchCount.Empty();
+		TArray<int32> matchCount;
+		matchCount.SetNumZeroed(Materials.Num());
 
 		TArray<TPair<int32, int32>> adjustIndexes = {
 			TPair<int32, int32>(index - 1, index - 2),
@@ -119,31 +121,18 @@ bool ATileGrid::IsMatchPossible()
 		{
 			if(TileGrid.IsValidIndex(Pair.Key))
 			{
-				if(matchCount.Contains(TileGrid[Pair.Key]->TypeIndex))
-					matchCount[TileGrid[Pair.Key]->TypeIndex]++;
-				else
+				matchCount[TileGrid[Pair.Key]->TypeIndex]++;
+				
+				if(TileGrid.IsValidIndex(Pair.Value) && TileGrid[Pair.Value]->TypeIndex == TileGrid[Pair.Key]->TypeIndex)
 				{
-					matchCount.Add(TileGrid[Pair.Key]->TypeIndex, 1);
-				}
-
-				if(TileGrid.IsValidIndex(Pair.Value))
-				{
-					if(TileGrid[Pair.Value]->TypeIndex == TileGrid[Pair.Key]->TypeIndex)
-					{
-						if(matchCount.Contains(TileGrid[Pair.Value]->TypeIndex))
-							matchCount[TileGrid[Pair.Value]->TypeIndex]++;
-						else
-						{
-							matchCount.Add(TileGrid[Pair.Value]->TypeIndex, 1);
-						}
-					}
+					matchCount[TileGrid[Pair.Value]->TypeIndex]++;
 				}
 			}
 		}
 
-		for (const auto& element : matchCount)
+		for (int32 count : matchCount)
 		{
-			if (element.Value >= 3)
+			if (count >= 3)
 			{
 				return true;
 			}
@@ -163,12 +152,9 @@ void ATileGrid::SearchMatchingTiles()
 		{
 			if(TileGrid[index]->IsMatching(TileGrid[index+1].Get()) && TileGrid[index]->IsMatching(TileGrid[index+2].Get()))
 			{
-				if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index].Get());
-				if(MatchingTiles.Find(TileGrid[index+1].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index+1].Get());
-				if(MatchingTiles.Find(TileGrid[index+2].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index+2].Get());
+				MatchingTiles.AddUnique(TileGrid[index].Get());
+				MatchingTiles.AddUnique(TileGrid[index+1].Get());
+				MatchingTiles.AddUnique(TileGrid[index+2].Get());
 			}
 		}
 
@@ -177,12 +163,9 @@ void ATileGrid::SearchMatchingTiles()
 		{
 			if(TileGrid[index]->IsMatching(TileGrid[index+GridColumn].Get()) && TileGrid[index]->IsMatching(TileGrid[index+GridColumn*2].Get()))
 			{
-				if(MatchingTiles.Find(TileGrid[index].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index].Get());
-				if(MatchingTiles.Find(TileGrid[index+GridColumn].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index+GridColumn].Get());
-				if(MatchingTiles.Find(TileGrid[index+GridColumn*2].Get()) == INDEX_NONE)
-					MatchingTiles.Add(TileGrid[index+GridColumn*2].Get());
+				MatchingTiles.AddUnique(TileGrid[index].Get());
+				MatchingTiles.AddUnique(TileGrid[index+GridColumn].Get());
+				MatchingTiles.AddUnique(TileGrid[index+GridColumn*2].Get());
 			}
 		}
 	}
@@ -242,10 +225,7 @@ void ATileGrid::FillGrid()
 
 int32 ATileGrid::GetTileIndexFromGridIndex(int8 rowIndex, int8 columnIndex)
 {
-	if(rowIndex < 0 || rowIndex >= GridRow)
-		return INDEX_NONE;
-
-	if(columnIndex < 0 || columnIndex >= GridColumn)
+	if(rowIndex < 0 || rowIndex >= GridRow || columnIndex < 0 || columnIndex >= GridColumn)
 		return INDEX_NONE;
 	
 	return rowIndex * GridColumn + columnIndex;
@@ -277,7 +257,7 @@ bool ATileGrid::HasEmpty()
 	return UnusedTiles.Num() > 0;
 }
 
-bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
+bool ATileGrid::IsAdjustTiles(ATile* tile1, ATile* tile2)
 {
 	int32 tile1Index = GetTileIndex(tile1);
 	int32 tile2Index = GetTileIndex(tile2);
@@ -285,93 +265,72 @@ bool ATileGrid::IsSwapAble(ATile* tile1, ATile* tile2)
 	if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
 		return false;
 	
-	if(FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn)
-		return true;
+	return FMath::Abs(tile1Index - tile2Index) == 1 || FMath::Abs(tile1Index - tile2Index) == GridColumn;
+}
 
-	return false;
+void ATileGrid::SwapTiles(ATile* tile1, ATile* tile2)
+{
+	if(!IsAdjustTiles(tile1, tile2))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Swap Fail : Not Adjust Tiles."));
+		return;
+	}
+
+	int32 tile1Index = GetTileIndex(tile1);
+	int32 tile2Index = GetTileIndex(tile2);
+
+	if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SwapP TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
+		return;
+	}
+	TileGrid[tile1Index] = tile2;
+	TileGrid[tile2Index] = tile1;
+
+	FVector loc1 = tile1->GetActorLocation();
+	tile1->SetActorLocation(tile2->GetActorLocation());
+	tile2->SetActorLocation(loc1);	
 }
 
 void ATileGrid::UndoSwapProcess(ATile* tile1, ATile* tile2)
 {
 	UE_LOG(LogTemp, Display, TEXT("ATileGrid::UndoSwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
-	if(IsSwapAble(tile1, tile2))
-	{
-		int32 tile1Index = GetTileIndex(tile1);
-		int32 tile2Index = GetTileIndex(tile2);
-
-		if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("UndoSwapProcess TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
-			return;
-		}
-		TileGrid[tile1Index] = tile2;
-		TileGrid[tile2Index] = tile1;
-
-		FVector loc1 = tile1->GetActorLocation();
-		tile1->SetActorLocation(tile2->GetActorLocation());
-		tile2->SetActorLocation(loc1);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile : These are non-continuous tiles."));
-	}	
+	
+	SwapTiles(tile1, tile2);
 }
 
 void ATileGrid::SwapProcess(ATile* tile1, ATile* tile2)
 {
 	UE_LOG(LogTemp, Display, TEXT("ATileGrid::SwapProcess : %s, %s"),*tile1->GetName(),*tile2->GetName());
-	if(IsSwapAble(tile1, tile2))
+	
+	SwapTiles(tile1, tile2);
+	
+	int processedTileCount = 0;
+	do
 	{
-		int32 tile1Index = GetTileIndex(tile1);
-		int32 tile2Index = GetTileIndex(tile2);
-
-		if(tile1Index == INDEX_NONE || tile2Index == INDEX_NONE)
+		while(HasEmpty())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("UndoSwapProcess TileIndex None.  %s : %d, %s : %d"), *tile1->GetName(), tile1Index, *tile2->GetName(), tile2Index);
-			return;
+			MoveTiles();
+			FillGrid();
 		}
-
-		TileGrid[tile1Index] = tile2;
-		TileGrid[tile2Index] = tile1;
-		
-		FVector loc1 = tile1->GetActorLocation();
-		tile1->SetActorLocation(tile2->GetActorLocation());
-		tile2->SetActorLocation(loc1);
-		
-		int processedTileCount = 0;
-		do
-		{
-			while(HasEmpty())
-			{
-				MoveTiles();
-				FillGrid();
-				
-			}
-			SearchMatchingTiles();
-			ProcessMatchingTiles();
-			processedTileCount += UnusedTiles.Num();
-		}
-		while (HasEmpty());
-
-		
-		if(processedTileCount == 0)
-		{
-			//Undo
-			UndoSwapProcess(tile1, tile2);
-		}
-		else
-		{
-			//점수반영
-		}
-
-		if(IsMatchPossible() == false)
-		{
-			UE_LOG(LogTemp, Display, TEXT("GAME OVER : matching Impossible!"));
-		}
-
+		SearchMatchingTiles();
+		ProcessMatchingTiles();
+		processedTileCount += UnusedTiles.Num();
+	}
+	while (HasEmpty());
+	
+	if(processedTileCount == 0)
+	{
+		//Undo
+		UndoSwapProcess(tile1, tile2);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Can't SwapTile : These are non-continuous tiles."));
-	}	
+		//점수반영
+	}
+
+	if(IsMatchPossible() == false)
+	{
+		UE_LOG(LogTemp, Display, TEXT("GAME OVER : matching Impossible!"));
+	}
 }

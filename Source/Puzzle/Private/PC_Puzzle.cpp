@@ -78,7 +78,7 @@ void APC_Puzzle::InputAction_Mouse_BT_Left(const FInputActionValue& value)
 			}
 			else if(!SelectedTile1.IsValid())
 			{
-				if(TileGrid->IsSwapAble(SelectedTile0.Get(), selectedTile))
+				if(TileGrid->IsAdjustTiles(SelectedTile0.Get(), selectedTile))
 				{
 					SelectedTile1 = selectedTile;
 					SelectedTile1->Selected(true);
